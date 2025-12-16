@@ -57,11 +57,11 @@
                     },
                     "retirementDateFrom": {
                         "type": "string",
-                        "description": "ISO 8601 date - include updates with retirement date on or after this date (only applies to updates with Retirement availability ring)"
+                        "description": "ISO 8601 date - include updates with retirement date on or after this date (only applies to retirement updates)"
                     },
                     "retirementDateTo": {
                         "type": "string",
-                        "description": "ISO 8601 date - include updates with retirement date on or before this date (only applies to updates with Retirement availability ring)"
+                        "description": "ISO 8601 date - include updates with retirement date on or before this date (only applies to retirement updates)"
                     }
                 }
             },
@@ -69,11 +69,14 @@
                 "type": "string",
                 "enum": [
                     "relevance",
-                    "modified",
-                    "created",
-                    "retirementDate"
+                    "modified:desc",
+                    "modified:asc",
+                    "created:desc",
+                    "created:asc",
+                    "retirementDate:asc",
+                    "retirementDate:desc"
                 ],
-                "description": "Sort order for results. 'relevance' (default for keyword queries, uses BM25 score), 'modified' (most recently modified first), 'created' (most recently created first), 'retirementDate' (earliest retirement date first, only for updates with Retirement ring). If not specified, defaults to 'relevance' for keyword searches and 'modified' for filter-only searches."
+                "description": "Sort order for results with direction suffix (:asc or :desc). 'relevance' (default for keyword queries, uses BM25 score, always descending), 'modified:desc' (most recently modified first), 'modified:asc' (oldest modified first), 'created:desc' (most recently created first), 'created:asc' (oldest created first), 'retirementDate:asc' (earliest retirement date first), 'retirementDate:desc' (latest retirement date first, only includes updates with Retirement ring). If not specified, defaults to 'relevance' for keyword searches and 'modified:desc' for filter-only searches."
             },
             "limit": {
                 "type": "number",
@@ -224,7 +227,7 @@
                     ],
                     "dateFrom": "2026-01-01"
                 },
-                "sortBy": "retirementDate",
+                "sortBy": "retirementDate:asc",
                 "limit": 10
             },
             "output": {
@@ -271,7 +274,7 @@
                     "retirementDateFrom": "2026-01-01",
                     "retirementDateTo": "2026-12-31"
                 },
-                "sortBy": "retirementDate",
+                "sortBy": "retirementDate:asc",
                 "limit": 20
             },
             "output": {
@@ -389,7 +392,8 @@
         "This tool returns lightweight results WITHOUT description fields to reduce token usage.",
         "Use get_azure_update with the returned ID to retrieve full details including descriptions.",
         "The 'id' parameter has been removed from this tool. Use get_azure_update instead for ID-based retrieval.",
-        "The 'retirementDate' sort option orders by the earliest retirement date first (ascending). Updates without a Retirement ring availability are excluded when this sort is used.",
+        "Sort options use explicit direction suffixes: ':asc' for ascending, ':desc' for descending. Default is 'relevance' for keyword queries and 'modified:desc' for filter-only queries.",
+        "The 'retirementDate' sort options only include updates with a Retirement ring availability. Use ':asc' for earliest retirement first, ':desc' for latest retirement first.",
         "The 'retirementDateFrom' and 'retirementDateTo' filters apply specifically to the retirement date found in the availabilities array where ring='Retirement'."
     ]
 }
