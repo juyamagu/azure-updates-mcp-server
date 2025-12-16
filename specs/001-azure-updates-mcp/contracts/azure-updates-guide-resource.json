@@ -1,0 +1,132 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Azure Updates Guide Resource",
+    "description": "MCP Resource containing available filter values and usage guide for the search_azure_updates tool. This resource helps LLMs understand what tags, categories, products, and availability rings are available in the dataset.",
+    "type": "object",
+    "properties": {
+        "uri": {
+            "type": "string",
+            "const": "azure-updates://guide",
+            "description": "Resource URI for the Azure Updates guide"
+        },
+        "name": {
+            "type": "string",
+            "const": "Azure Updates Search Guide",
+            "description": "Human-readable name for this resource"
+        },
+        "mimeType": {
+            "type": "string",
+            "const": "application/json",
+            "description": "Content type of the resource"
+        },
+        "description": {
+            "type": "string",
+            "const": "Available filter values and usage guide for searching Azure service updates. Use this to discover valid tags, product categories, products, and availability rings before constructing search queries.",
+            "description": "Description of what this resource provides"
+        }
+    },
+    "returns": {
+        "type": "object",
+        "description": "Available vocabulary and metadata for constructing search queries",
+        "properties": {
+            "tags": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "All available tags in the dataset (e.g., ['Retirements', 'Security', 'Features'])",
+                "examples": [
+                    [
+                        "Retirements",
+                        "Security",
+                        "Features",
+                        "Developer",
+                        "Azure Government"
+                    ]
+                ]
+            },
+            "productCategories": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "All available product categories (e.g., ['Compute', 'AI + Machine Learning', 'Security'])",
+                "examples": [
+                    [
+                        "Compute",
+                        "AI + Machine Learning",
+                        "Security",
+                        "Networking",
+                        "Storage"
+                    ]
+                ]
+            },
+            "products": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "All available Azure products (e.g., ['Azure Virtual Machines', 'Azure SQL Database'])",
+                "examples": [
+                    [
+                        "Azure Virtual Machines",
+                        "Azure SQL Database",
+                        "Azure Machine Learning",
+                        "Azure Cognitive Services"
+                    ]
+                ]
+            },
+            "statuses": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "All available update statuses (e.g., ['Active', 'Retired'])",
+                "examples": [
+                    [
+                        "Active",
+                        "Retired"
+                    ]
+                ]
+            },
+            "availabilityRings": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "All available availability rings",
+                "examples": [
+                    [
+                        "General Availability",
+                        "Preview",
+                        "Private Preview",
+                        "Retirement"
+                    ]
+                ]
+            },
+            "totalUpdates": {
+                "type": "integer",
+                "description": "Total number of Azure updates in the database",
+                "examples": [
+                    9300
+                ]
+            },
+            "lastSyncTimestamp": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the data was last synchronized with Azure Updates API (ISO 8601)",
+                "examples": [
+                    "2025-12-16T02:00:00.0000000Z"
+                ]
+            },
+            "dataFreshnessHours": {
+                "type": "number",
+                "description": "How many hours since last sync (helps assess data staleness)",
+                "examples": [
+                    8.5,
+                    23.2
+                ]
+            }
+        }
+    }
+}

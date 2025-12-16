@@ -68,11 +68,13 @@ The MCP server automatically keeps Azure Updates data current by periodically sy
 
 **Acceptance Scenarios**:
 
-1. **Given** initial sync has completed, **When** a scheduled sync runs, **Then** only updates modified since last sync timestamp are fetched
-2. **Given** new updates exist in Azure API, **When** differential sync runs, **Then** new records are added to local storage
-3. **Given** existing updates have been modified in Azure API, **When** sync runs, **Then** local records are updated via UPSERT operations
-4. **Given** sync fails midway, **When** next sync runs, **Then** system resumes from last successful checkpoint without data duplication
-5. **Given** no updates have occurred since last sync, **When** sync runs, **Then** no unnecessary data fetching occurs
+1. **Given** MCP server starts for the first time with included snapshot, **When** server initializes, **Then** tools are available immediately with snapshot data (<1 second) and background sync starts asynchronously
+2. **Given** MCP server starts with stale data (>24h old), **When** server initializes, **Then** tools are available immediately and background sync starts asynchronously
+3. **Given** new updates exist in Azure API, **When** differential sync runs, **Then** new records are added to local storage without blocking queries
+4. **Given** existing updates have been modified in Azure API, **When** sync runs, **Then** local records are updated via UPSERT operations
+5. **Given** sync fails midway, **When** next sync runs, **Then** system resumes from last successful checkpoint without data duplication
+6. **Given** no updates have occurred since last sync, **When** sync runs, **Then** no unnecessary data fetching occurs
+7. **Given** background sync is in progress, **When** user queries data, **Then** system responds with cached data without waiting for sync completion
 
 ---
 
@@ -130,14 +132,14 @@ The MCP server exposes structured metadata (tags, product categories, availabili
 - **FR-004**: System MUST provide simplified filtering by tags, product categories, products, status, and date ranges without requiring OData syntax
 - **FR-005**: System MUST implement case-insensitive keyword search across title and description fields with relevance ranking (title matches ranked higher than description matches)
 - **FR-006**: System MUST perform UPSERT operations using `id` as unique key to handle both new updates and modifications to existing records
-- **FR-007**: System MUST expose MCP tools for search, filter, and retrieval operations optimized for LLM consumption
-- **FR-008**: System MUST automatically schedule periodic synchronization to keep local data current with configurable interval (default: every 24 hours)
+- **FR-007**: System MUST expose a single MCP tool (`search_azure_updates`) for search, filter, and retrieval operations optimized for LLM consumption, with all functionality accessible through one unified interface
+- **FR-008**: System MUST include pre-populated database snapshot in distribution package, and automatically perform non-blocking background differential sync on startup if data is older than configurable threshold (default: 24 hours), allowing MCP tools to be available immediately with snapshot data
 - **FR-009**: System MUST convert HTML description content to markdown format for LLM-friendly consumption, preserving all content including embedded links and data URLs
 - **FR-010**: System MUST handle API failures gracefully with exponential backoff retry logic (max 3 retries with delays of 1s, 2s, 4s)
 - **FR-011**: System MUST store full timestamp precision (7 decimal places) for accurate differential updates
 - **FR-012**: System MUST accept and store unknown tag/category values dynamically without schema validation failures
 - **FR-013**: System MUST provide pagination support for large result sets (default page size: 50 items)
-- **FR-014**: System MUST expose metadata about available filters (tags, categories, products, statuses) to help LLMs construct queries
+- **FR-014**: System MUST expose metadata about available filters (tags, categories, products, statuses) as an MCP resource (`azure-updates://guide`) to help LLMs construct queries, allowing automatic inclusion in context without explicit tool calls
 - **FR-015**: System MUST log all synchronization operations, errors, and query patterns for monitoring and debugging, and expose structured metrics including sync operation counts, query latency percentiles, error rates by type, and search index hit ratios
 - **FR-016**: System MUST support filtering by availability ring (General Availability, Preview, Private Preview, Retirement)
 - **FR-017**: System MUST support date range queries for created, modified, and availability date fields
@@ -171,7 +173,7 @@ The MCP server exposes structured metadata (tags, product categories, availabili
 - **SC-002**: Search queries return results in under 500ms for typical queries (filters + keyword search across title and description)
 - **SC-003**: System successfully syncs with Azure Updates API with 99%+ success rate, handling transient failures with automatic retry
 - **SC-004**: Zero OData syntax knowledge required - 100% of filter operations work through simple JSON-based parameters
-- **SC-005**: Data freshness maintained within configured sync interval - local data is never more than one sync cycle out of date under normal operations (default: 24 hours)
+- **SC-005**: Data freshness maintained within configured staleness threshold - local data automatically updates on startup if older than threshold under normal operations (default: 24 hours)
 - **SC-006**: Keyword search provides 85%+ precision for exact term matches in title and description fields
 - **SC-007**: System handles concurrent requests from multiple AI assistants without performance degradation (tested with 10+ concurrent queries)
 - **SC-008**: LLM context consumption reduced by 60%+ through clean markdown conversion of HTML descriptions
@@ -184,7 +186,7 @@ The MCP server exposes structured metadata (tags, product categories, availabili
 
 - Q: Should semantic search use a locally-runnable embedding model only, cloud-based service only, both options, or be deferred from MVP? → A: Defer semantic search from MVP - focus on keyword search across title and description fields instead (simpler implementation, sufficient for initial use cases)
 - Q: What level of observability should the system provide - logs only, logs + health endpoint, logs + structured metrics, or full observability with tracing? → A: Logs + structured metrics (sync count, query latency, error rates) to enable dashboards and alerting for tracking Success Criteria
-- Q: Should sync interval be hardcoded, configurable with presets, or fully configurable including manual-only mode? → A: Configurable interval with 24-hour default (allows operators to tune based on deployment needs while providing sensible out-of-box behavior)
+- Q: Should sync interval be hardcoded, configurable with presets, or fully configurable including manual-only mode? → A: Configurable staleness threshold with 24-hour default for startup sync checks (allows operators to tune based on usage patterns while providing sensible out-of-box behavior; note: stdio MCP servers cannot use background cron scheduling)
 - Q: Should HTML description content be stripped to plain text, converted to markdown with all content preserved, converted with sanitization, or kept as HTML? → A: Convert to markdown preserving all content including data URLs (maintains full fidelity of original content for LLM consumption)
 - Q: Should the server support local-only MCP access, remote HTTP access with auth, or both deployment modes? → A: Local MCP access only for MVP (simpler security model, faster iteration), with architecture designed to support future remote HTTP access with authentication
 
@@ -199,7 +201,9 @@ The MCP server exposes structured metadata (tags, product categories, availabili
 - Users interact through AI assistants that support Model Context Protocol
 - Network connectivity to Azure Updates API is available for scheduled syncs (intermittent connectivity acceptable due to local replication)
 - HTML in description fields follows standard formatting (though system should handle malformed HTML gracefully)
-- The rate at which Azure Updates are modified is moderate (not thousands per hour), making daily sync intervals sufficient for most use cases, with configurability for deployments requiring more frequent updates
+- The rate at which Azure Updates are modified is moderate (not thousands per hour), making 24-hour staleness threshold sufficient for most use cases
+- stdio MCP servers only run while LLM app is active, so background scheduling is not possible; startup sync with staleness detection is the appropriate pattern
+- Pre-populated database snapshot can be distributed with npm package (~70MB), with snapshot refreshed on each package release to maintain reasonable data freshness
 
 ## Out of Scope
 
@@ -217,10 +221,9 @@ The MCP server exposes structured metadata (tags, product categories, availabili
 ## Dependencies
 
 - Azure Updates API availability at `https://www.microsoft.com/releasecommunications/api/v2/azure`
-- Persistent storage system (SQLite, PostgreSQL, or similar) for local data replication with full-text search capability
+- Persistent storage system (SQLite) for local data replication with full-text search capability
 - MCP SDK/framework for implementing Model Context Protocol server
 - HTML-to-Markdown conversion library for description field processing
-- Scheduling mechanism for periodic sync operations (cron, task scheduler, or built-in scheduler)
 
 ## Risks and Mitigation
 

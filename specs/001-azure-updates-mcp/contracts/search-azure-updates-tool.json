@@ -1,0 +1,271 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "Search Azure Updates Tool",
+    "description": "Search, filter, and retrieve Azure service updates. Supports natural language queries with keyword matching, multi-dimensional filtering (tags, categories, products, dates), and fetching specific updates by ID. This is the primary tool for accessing Azure Updates data.",
+    "type": "object",
+    "properties": {
+        "query": {
+            "type": "string",
+            "description": "Natural language search query or keywords to match in title and description. Uses full-text search with BM25 relevance ranking. Leave empty to filter only without keyword search.",
+            "examples": [
+                "Show me security retirements",
+                "OAuth authentication updates",
+                "machine learning preview features",
+                "retirement announcements Q1 2026"
+            ]
+        },
+        "id": {
+            "type": "string",
+            "description": "Fetch a specific Azure update by its unique ID. When provided, all other parameters are ignored and only this update is returned.",
+            "examples": [
+                "AZ-123e4567-e89b-12d3-a456-426614174000",
+                "12345678-1234-1234-1234-123456789012"
+            ]
+        },
+        "filters": {
+            "type": "object",
+            "description": "Structured filters to narrow down search results. All filters use AND logic.",
+            "properties": {
+                "tags": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Filter by update tags. Check the 'azure-updates://guide' resource for available tags.",
+                    "examples": [
+                        [
+                            "Retirements"
+                        ],
+                        [
+                            "Security",
+                            "Features"
+                        ]
+                    ]
+                },
+                "productCategories": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Filter by Azure product categories. Check the 'azure-updates://guide' resource for available categories.",
+                    "examples": [
+                        [
+                            "Compute"
+                        ],
+                        [
+                            "AI + Machine Learning",
+                            "Analytics"
+                        ]
+                    ]
+                },
+                "products": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    },
+                    "description": "Filter by specific Azure products. Check the 'azure-updates://guide' resource for available products.",
+                    "examples": [
+                        [
+                            "Azure Virtual Machines"
+                        ],
+                        [
+                            "Azure Machine Learning",
+                            "Azure Cognitive Services"
+                        ]
+                    ]
+                },
+                "status": {
+                    "type": "string",
+                    "description": "Filter by update status (e.g., 'Active', 'Retired'). Leave empty to include all statuses.",
+                    "examples": [
+                        "Active",
+                        "Retired"
+                    ]
+                },
+                "availabilityRing": {
+                    "type": "string",
+                    "description": "Filter by availability ring.",
+                    "enum": [
+                        "General Availability",
+                        "Preview",
+                        "Private Preview",
+                        "Retirement"
+                    ],
+                    "examples": [
+                        "Retirement",
+                        "General Availability"
+                    ]
+                },
+                "dateFrom": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Filter updates modified or with availability date on or after this date (ISO 8601: YYYY-MM-DD).",
+                    "examples": [
+                        "2026-01-01",
+                        "2025-12-01"
+                    ]
+                },
+                "dateTo": {
+                    "type": "string",
+                    "format": "date",
+                    "description": "Filter updates modified or with availability date before this date (ISO 8601: YYYY-MM-DD).",
+                    "examples": [
+                        "2026-03-31",
+                        "2025-12-31"
+                    ]
+                }
+            },
+            "additionalProperties": false
+        },
+        "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100,
+            "default": 50,
+            "description": "Maximum number of results to return. Default: 50, Max: 100."
+        },
+        "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0,
+            "description": "Number of results to skip for pagination. Default: 0."
+        }
+    },
+    "required": [],
+    "additionalProperties": false,
+    "examples": [
+        {
+            "query": "OAuth authentication",
+            "filters": {
+                "tags": [
+                    "Security"
+                ]
+            },
+            "limit": 10
+        },
+        {
+            "filters": {
+                "tags": [
+                    "Retirements"
+                ],
+                "productCategories": [
+                    "Compute"
+                ],
+                "dateFrom": "2026-01-01",
+                "dateTo": "2026-03-31"
+            }
+        },
+        {
+            "query": "machine learning",
+            "filters": {
+                "availabilityRing": "Preview"
+            },
+            "limit": 20
+        },
+        {
+            "id": "AZ-123e4567-e89b-12d3-a456-426614174000"
+        }
+    ],
+    "returns": {
+        "type": "object",
+        "properties": {
+            "results": {
+                "type": "array",
+                "description": "Array of Azure updates matching the search criteria. Ordered by relevance (for keyword queries) or modified date (for filter-only queries).",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "Unique identifier for the Azure update"
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "Title of the Azure update"
+                        },
+                        "description": {
+                            "type": "string",
+                            "description": "Update description in markdown format (converted from HTML for LLM consumption)"
+                        },
+                        "status": {
+                            "type": "string",
+                            "description": "Update status (e.g., 'Active', 'Retired')",
+                            "nullable": true
+                        },
+                        "tags": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Tags associated with the update"
+                        },
+                        "productCategories": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Azure product categories for the update"
+                        },
+                        "products": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Specific Azure products mentioned in the update"
+                        },
+                        "availabilities": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "ring": {
+                                        "type": "string",
+                                        "description": "Availability ring (e.g., 'General Availability', 'Retirement')"
+                                    },
+                                    "date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "description": "Date for this availability milestone",
+                                        "nullable": true
+                                    }
+                                }
+                            },
+                            "description": "Availability timeline for the update"
+                        },
+                        "created": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the update was created (ISO 8601)"
+                        },
+                        "modified": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the update was last modified (ISO 8601)"
+                        },
+                        "relevance": {
+                            "type": "number",
+                            "description": "Relevance score for keyword searches (BM25 ranking). Lower (more negative) is better. Omitted for filter-only queries.",
+                            "nullable": true
+                        }
+                    }
+                }
+            },
+            "total": {
+                "type": "integer",
+                "description": "Total number of matching results (for pagination)"
+            },
+            "limit": {
+                "type": "integer",
+                "description": "Limit applied to this query"
+            },
+            "offset": {
+                "type": "integer",
+                "description": "Offset applied to this query"
+            },
+            "hasMore": {
+                "type": "boolean",
+                "description": "Whether more results are available (offset + limit < total)"
+            }
+        }
+    }
+}
