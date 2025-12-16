@@ -18,8 +18,6 @@ An MCP (Model Context Protocol) server that provides AI assistants with seamless
 
 ## Quick Start
 
-### Installation
-
 **Step 1: Get the tarball package**
 
 Obtain `azure-updates-mcp-server-{version}.tgz` from your internal distribution channel.
@@ -34,7 +32,7 @@ npm install -g ./azure-updates-mcp-server-{version}.tgz
 
 Now, you can run the MCP server via `azure-updates-mcp-server` command. If you're using VS Code, the following configuration will launch the server:
 
-```json
+```jsonc
 {
   "cline.mcpServers": {
     "azure-updates": {
@@ -49,10 +47,11 @@ Now, you can run the MCP server via `azure-updates-mcp-server` command. If you'r
   }
 }
 ```
+### Alternative: Using npx
 
-**Note**: Or, simply run with `npx` without global installation:
+Or, simply run with `npx` without global installation:
 
-```json
+```jsonc
 {
   "cline.mcpServers": {
     "azure-updates": {
