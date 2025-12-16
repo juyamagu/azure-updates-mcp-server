@@ -1,0 +1,305 @@
+{
+    "name": "search_azure_updates",
+    "description": "Search and filter Azure service updates. Returns lightweight results with metadata only (no descriptions). Supports natural language queries with keyword matching and multi-dimensional filtering (tags, categories, products, dates). Use get_azure_update to retrieve full details including descriptions for specific updates.",
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "query": {
+                "type": "string",
+                "description": "Natural language search query or keywords to match in title and description. Uses full-text search with BM25 relevance ranking. Leave empty to filter only without keyword search."
+            },
+            "filters": {
+                "type": "object",
+                "description": "Structured filters to narrow down search results. All filters use AND logic.",
+                "properties": {
+                    "tags": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Filter by update tags (e.g., ['Retirements', 'Security'])"
+                    },
+                    "productCategories": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Filter by Azure product categories (e.g., ['Compute', 'AI + Machine Learning'])"
+                    },
+                    "products": {
+                        "type": "array",
+                        "items": {
+                            "type": "string"
+                        },
+                        "description": "Filter by specific Azure products (e.g., ['Azure Virtual Machines'])"
+                    },
+                    "status": {
+                        "type": "string",
+                        "description": "Filter by update status (e.g., 'Active', 'Retired')"
+                    },
+                    "availabilityRing": {
+                        "type": "string",
+                        "enum": [
+                            "General Availability",
+                            "Preview",
+                            "Private Preview",
+                            "Retirement"
+                        ],
+                        "description": "Filter by availability ring"
+                    },
+                    "dateFrom": {
+                        "type": "string",
+                        "description": "ISO 8601 date - include updates modified/available on or after this date"
+                    },
+                    "dateTo": {
+                        "type": "string",
+                        "description": "ISO 8601 date - include updates modified/available on or before this date"
+                    }
+                }
+            },
+            "limit": {
+                "type": "number",
+                "description": "Maximum number of results to return (1-100, default: 50)",
+                "minimum": 1,
+                "maximum": 100
+            },
+            "offset": {
+                "type": "number",
+                "description": "Number of results to skip for pagination (default: 0)",
+                "minimum": 0
+            }
+        }
+    },
+    "outputSchema": {
+        "type": "object",
+        "properties": {
+            "results": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "id": {
+                            "type": "string",
+                            "description": "Unique identifier"
+                        },
+                        "title": {
+                            "type": "string",
+                            "description": "Update title"
+                        },
+                        "status": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Update status"
+                        },
+                        "tags": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Update tags"
+                        },
+                        "productCategories": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Product categories"
+                        },
+                        "products": {
+                            "type": "array",
+                            "items": {
+                                "type": "string"
+                            },
+                            "description": "Specific products"
+                        },
+                        "created": {
+                            "type": "string",
+                            "description": "ISO 8601 timestamp"
+                        },
+                        "modified": {
+                            "type": "string",
+                            "description": "ISO 8601 timestamp"
+                        },
+                        "availabilities": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "ring": {
+                                        "type": "string"
+                                    },
+                                    "date": {
+                                        "type": "string"
+                                    }
+                                },
+                                "required": [
+                                    "ring",
+                                    "date"
+                                ]
+                            }
+                        },
+                        "relevanceScore": {
+                            "type": "number",
+                            "description": "BM25 relevance score (only present for keyword searches)"
+                        }
+                    },
+                    "required": [
+                        "id",
+                        "title",
+                        "created",
+                        "modified",
+                        "tags",
+                        "productCategories",
+                        "products",
+                        "availabilities"
+                    ]
+                }
+            },
+            "metadata": {
+                "type": "object",
+                "properties": {
+                    "total": {
+                        "type": "number",
+                        "description": "Total number of matching results"
+                    },
+                    "limit": {
+                        "type": "number",
+                        "description": "Results limit applied"
+                    },
+                    "offset": {
+                        "type": "number",
+                        "description": "Results offset applied"
+                    },
+                    "hasMore": {
+                        "type": "boolean",
+                        "description": "Whether more results are available"
+                    },
+                    "queryTime": {
+                        "type": "number",
+                        "description": "Query execution time in milliseconds"
+                    }
+                },
+                "required": [
+                    "total",
+                    "limit",
+                    "offset",
+                    "hasMore",
+                    "queryTime"
+                ]
+            }
+        },
+        "required": [
+            "results",
+            "metadata"
+        ]
+    },
+    "examples": [
+        {
+            "name": "Search by tags and date",
+            "input": {
+                "filters": {
+                    "tags": [
+                        "Retirements"
+                    ],
+                    "productCategories": [
+                        "Compute"
+                    ],
+                    "dateFrom": "2026-01-01"
+                },
+                "limit": 10
+            },
+            "output": {
+                "results": [
+                    {
+                        "id": "AZ-abc123",
+                        "title": "Retirement: Azure Virtual Machines Basic tier",
+                        "status": "Active",
+                        "tags": [
+                            "Retirements"
+                        ],
+                        "productCategories": [
+                            "Compute"
+                        ],
+                        "products": [
+                            "Azure Virtual Machines"
+                        ],
+                        "created": "2025-01-15T10:00:00.000Z",
+                        "modified": "2025-01-20T14:30:00.000Z",
+                        "availabilities": [
+                            {
+                                "ring": "Retirement",
+                                "date": "2026-03-31"
+                            }
+                        ]
+                    }
+                ],
+                "metadata": {
+                    "total": 45,
+                    "limit": 10,
+                    "offset": 0,
+                    "hasMore": true,
+                    "queryTime": 23
+                }
+            }
+        },
+        {
+            "name": "Keyword search",
+            "input": {
+                "query": "OAuth authentication security",
+                "limit": 5
+            },
+            "output": {
+                "results": [
+                    {
+                        "id": "AZ-security456",
+                        "title": "OAuth 2.0 authentication improvements",
+                        "status": "Active",
+                        "tags": [
+                            "Security",
+                            "Features"
+                        ],
+                        "productCategories": [
+                            "Identity"
+                        ],
+                        "products": [
+                            "Azure Active Directory"
+                        ],
+                        "created": "2025-02-01T08:00:00.000Z",
+                        "modified": "2025-02-05T12:00:00.000Z",
+                        "availabilities": [
+                            {
+                                "ring": "General Availability",
+                                "date": "2025-03-01"
+                            }
+                        ],
+                        "relevanceScore": 0.89
+                    }
+                ],
+                "metadata": {
+                    "total": 12,
+                    "limit": 5,
+                    "offset": 0,
+                    "hasMore": true,
+                    "queryTime": 18
+                }
+            }
+        }
+    ],
+    "errors": [
+        {
+            "error": "Validation failed",
+            "details": [
+                "limit must be between 1 and 100"
+            ]
+        },
+        {
+            "error": "Search failed",
+            "details": "An unexpected error occurred while processing your search."
+        }
+    ],
+    "notes": [
+        "This tool returns lightweight results WITHOUT description fields to reduce token usage.",
+        "Use get_azure_update with the returned ID to retrieve full details including descriptions.",
+        "The 'id' parameter has been removed from this tool. Use get_azure_update instead for ID-based retrieval."
+    ]
+}
