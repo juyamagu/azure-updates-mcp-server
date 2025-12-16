@@ -10,6 +10,9 @@ dist/
 build/
 *.tsbuildinfo
 
+# Package tarballs
+*.tgz
+
 # Environment variables
 .env
 .env.local

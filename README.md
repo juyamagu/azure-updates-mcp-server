@@ -10,46 +10,58 @@ An MCP (Model Context Protocol) server that provides AI assistants with seamless
 
 ## Features
 
-✨ **Natural Language Search** - Query with plain English like "Show me security retirements in 2026"  
 🔍 **Keyword Matching** - Full-text search across titles and descriptions with BM25 relevance ranking  
 🎯 **Simplified Filtering** - Filter by tags, categories, products, dates, and status—no OData knowledge needed  
 ⚡ **Fast Response** - Local SQLite replication ensures <500ms query response times  
 🔄 **Automatic Sync** - Differential synchronization keeps data fresh (configurable interval, default 24h)  
-📊 **Rich Metadata** - Expose all available filters and data freshness to help AI construct queries  
-🛡️ **Type-Safe** - Built with TypeScript strict mode for reliability
+📊 **Help Resource** - Expose all available filters and data freshness to help AI construct queries  
 
 ## Quick Start
 
 ### Installation
 
-**Option 1: Run with npx (Recommended)**
+**Step 1: Get the tarball package**
+
+Obtain `azure-updates-mcp-server-{version}.tgz` from your internal distribution channel.
+
+**Step 2: Install globally**
 
 ```bash
-npx azure-updates-mcp-server
+npm install -g ./azure-updates-mcp-server-{version}.tgz
 ```
 
-The server starts immediately with tools available. Background sync runs automatically if data is stale (>24h).
+**Step 3: Run the MCP server**
 
-**Option 2: Global Install**
+Now, you can run the MCP server via `azure-updates-mcp-server` command. If you're using VS Code, the following configuration will launch the server:
 
-```bash
-npm install -g azure-updates-mcp-server
-azure-updates-mcp-server
+```json
+{
+  "cline.mcpServers": {
+    "azure-updates": {
+      "command": "azure-updates-mcp-server",
+      // Those environment variables are optional; configure as needed
+      // "env": {
+      //   "DATABASE_PATH": "${workspaceFolder}/.azure-updates/data.db",
+      //   "SYNC_STALENESS_HOURS": "24",
+      //   "LOG_LEVEL": "info"
+      // }
+    }
+  }
+}
 ```
 
-**Option 3: Local Development**
+**Note**: Or, simply run with `npx` without global installation:
 
-```bash
-git clone https://github.com/your-org/azure-updates-mcp-server.git
-cd azure-updates-mcp-server
-npm install
-npm run build
-npm start
+```json
+{
+  "cline.mcpServers": {
+    "azure-updates": {
+      "command": "npx",
+      "args": ["~/azure-updates-mcp-server-{version}.tgz"],
+    }
+  }
+}
 ```
-
-### MCP Client Configuration
-
-See [Client Configuration Guide](./docs/client-configuration.md) for setup instructions for Claude Desktop, Continue.dev, Cline, and other MCP clients.
 
 ## Configuration
 
@@ -66,11 +78,9 @@ Configuration is done via environment variables. Create a `.env` file or set env
 
 See [.env.example](./.env.example) for all configuration options.
 
-## Usage
+## Available Tools
 
-### Available Tools
-
-#### `search_azure_updates`
+### `search_azure_updates`
 
 Search, filter, and retrieve Azure updates using natural language queries or structured filters.
 
@@ -145,7 +155,6 @@ See [Troubleshooting Guide](./docs/troubleshooting.md) for common issues and sol
 
 ## Documentation
 
-- [Client Configuration](./docs/client-configuration.md) - MCP client setup
 - [Development Guide](./docs/development.md) - Contributing and testing
 - [Troubleshooting](./docs/troubleshooting.md) - Common issues
 - [Azure Updates API Manual](./docs/azure-updates-api-manual.md) - API reference

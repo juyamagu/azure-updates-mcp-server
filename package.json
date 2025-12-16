@@ -22,7 +22,8 @@
         "inspect": "npx @modelcontextprotocol/inspector tsx src/index.ts",
         "inspect:build": "npm run build && npx @modelcontextprotocol/inspector node dist/index.js",
         "lint": "eslint .",
-        "lint:fix": "eslint . --fix"
+        "lint:fix": "eslint . --fix",
+        "package": "bash scripts/package.sh"
     },
     "keywords": [
         "mcp",
