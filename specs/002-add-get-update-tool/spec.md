@@ -37,10 +37,27 @@ An AI assistant wants to search for updates without consuming a large amount of 
 2. **Given** the tool definition, **When** inspected, **Then** the `id` parameter is no longer present in the input schema (search by ID is now handled by `get_azure_update`).
 3. **Given** a search result, **When** displayed, **Then** it provides enough information (Title, Tags, Date) for the AI to decide which update to fetch in detail.
 
+---
+
+### User Story 3 - Retirement Date Filtering (Priority: P1)
+
+An AI assistant needs to find Azure retirements happening within a specific date range and sort them by retirement date.
+
+**Why this priority**: Critical for proactive planning - users need to know what's retiring soon.
+
+**Independent Test**: Can be tested by calling `search_azure_updates` with `retirementDateFrom/To` filters and verifying only matching retirements are returned, sorted correctly.
+
+**Acceptance Scenarios**:
+
+1. **Given** a retirement date range filter, **When** `search_azure_updates` is called, **Then** only updates with retirement dates in that range are returned.
+2. **Given** `sortBy: "retirementDate:asc"`, **When** results are returned, **Then** they are ordered by earliest retirement date first.
+3. **Given** a keyword query and retirement filters, **When** combined, **Then** results match both keyword relevance AND date constraints.
+
 ### Edge Cases
 
 - What happens when `search_azure_updates` is called with `id` (legacy usage)? -> Should fail validation or ignore it (schema change implies validation failure).
 - What happens if the description is empty in the DB? -> `get_azure_update` should handle it gracefully.
+- What happens when sorting by retirementDate but no Retirement ring exists? -> Those updates should be excluded from results.
 
 ## Requirements *(mandatory)*
 
@@ -52,7 +69,9 @@ An AI assistant wants to search for updates without consuming a large amount of 
 - **FR-004**: System MUST modify `search_azure_updates` to remove the `id` parameter from its input schema.
 - **FR-005**: `search_azure_updates` MUST NOT return the full `description` or `descriptionMarkdown` fields in the results list.
 - **FR-006**: `search_azure_updates` MUST NOT return any description summary or snippet. It MUST return only title and metadata to maximize token savings.
-- **FR-007**: `search_azure_updates` MUST continue to support all existing filters and query parameters (except `id`).
+- **FR-007**: `search_azure_updates` query parameter MUST search across title, description, tags, productCategories, and products fields.
+- **FR-008**: `search_azure_updates` MUST support sorting by relevance, modified date, created date, and retirement date with explicit direction (asc/desc).
+- **FR-009**: `search_azure_updates` filters MUST include only essential metadata: status, availabilityRing, date ranges (modified and retirement).
 
 ### Key Entities
 

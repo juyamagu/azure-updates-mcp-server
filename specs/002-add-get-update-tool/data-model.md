@@ -42,16 +42,16 @@ export type AzureUpdateSummary = Omit<AzureUpdate, 'description'>;
 ```
 
 **Fields** (inherited from AzureUpdate, minus descriptions):
-- `id`: string
-- `title`: string
-- `status`: string | null
-- `locale`: string | null
-- `created`: string
-- `modified`: string
-- `tags`: string[]
-- `productCategories`: string[]
-- `products`: string[]
-- `availabilities`: AzureUpdateAvailability[]
+- `id`: string - Unique identifier for retrieval via get_azure_update
+- `title`: string - Update title (searchable via query parameter)
+- `status`: string | null - Update status (filterable)
+- `locale`: string | null - Locale
+- `created`: string - Creation timestamp (sortable)
+- `modified`: string - Last modified timestamp (sortable, filterable via dateFrom/To)
+- `tags`: string[] - Update tags (searchable via query parameter, displayed in results)
+- `productCategories`: string[] - Product categories (searchable via query parameter, displayed in results)
+- `products`: string[] - Specific products (searchable via query parameter, displayed in results)
+- `availabilities`: AzureUpdateAvailability[] - Availability info including retirement dates (filterable via retirementDateFrom/To)
 
 **Additional Field** (search-specific):
 - `relevanceScore`: number | undefined - BM25 relevance score (only present for keyword searches)
@@ -147,4 +147,11 @@ AzureUpdateAvailability (Nested)
    - `search_azure_updates`: Maps query results to `AzureUpdateSummary` format
    - `get_azure_update`: Returns `AzureUpdate` as-is from database query
 
-4. **Testing**: Type tests should verify that `AzureUpdateSummary` correctly omits description fields and includes all other fields from `AzureUpdate`.
+4. **Simplified Filtering**: Tags, productCategories, and products are NOT individual filter parameters. Instead, they are:
+   - Searchable via the `query` parameter (keyword search across all these fields)
+   - Returned in search results for display/context
+   - This design reduces API complexity while maintaining full search capability
+
+5. **Sorting Enhancements**: Added explicit direction suffixes (`:asc`, `:desc`) to sortBy parameter and support for sorting by retirement date.
+
+6. **Testing**: Type tests should verify that `AzureUpdateSummary` correctly omits description fields and includes all other fields from `AzureUpdate`.
