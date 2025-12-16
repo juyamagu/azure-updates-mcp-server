@@ -1,0 +1,44 @@
+# Source files (publish only dist/)
+src/
+tests/
+
+# Development files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentation (keep README.md, LICENSE, CHANGELOG.md)
+docs/
+specs/
+.specify/
+.github/
+
+# Configuration
+.eslintrc.json
+.eslintignore
+tsconfig.json
+vitest.config.ts
+
+# Environment
+.env*
+
+# Database files
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# Test coverage
+coverage/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Git
+.git/
+.gitignore

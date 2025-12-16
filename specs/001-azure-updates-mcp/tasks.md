@@ -21,15 +21,15 @@
 
 **Purpose**: Project initialization and basic TypeScript/Node.js structure
 
-- [ ] T001 Create project structure with src/, tests/, and data/ directories
-- [ ] T002 Initialize Node.js project with package.json (TypeScript 5.x, Node 18+ runtime)
-- [ ] T003 [P] Install core dependencies: @modelcontextprotocol/sdk, better-sqlite3, turndown
-- [ ] T004 [P] Install dev dependencies: typescript, vitest, tsx, eslint, @types/better-sqlite3, @types/turndown
-- [ ] T005 [P] Configure TypeScript with strict mode in tsconfig.json
-- [ ] T006 [P] Configure ESLint with TypeScript rules in .eslintrc.json
-- [ ] T007 [P] Setup Vitest test framework in vitest.config.ts
-- [ ] T008 [P] Add npm scripts: build, dev, test, lint in package.json
-- [ ] T009 Create .gitignore with node_modules, dist, data/*.db, .env
+- [X] T001 Create project structure with src/, tests/, and data/ directories
+- [X] T002 Initialize Node.js project with package.json (TypeScript 5.x, Node 18+ runtime)
+- [X] T003 [P] Install core dependencies: @modelcontextprotocol/sdk, better-sqlite3, turndown
+- [X] T004 [P] Install dev dependencies: typescript, vitest, tsx, eslint, @types/better-sqlite3, @types/turndown
+- [X] T005 [P] Configure TypeScript with strict mode in tsconfig.json
+- [X] T006 [P] Configure ESLint with TypeScript rules in .eslintrc.json
+- [X] T007 [P] Setup Vitest test framework in vitest.config.ts
+- [X] T008 [P] Add npm scripts: build, dev, test, lint in package.json
+- [X] T009 Create .gitignore with node_modules, dist, data/*.db, .env
 
 ---
 

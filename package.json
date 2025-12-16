@@ -1,0 +1,49 @@
+{
+    "name": "azure-updates-mcp-server",
+    "version": "0.1.0",
+    "description": "MCP server providing natural language search for Azure Updates without OData syntax",
+    "type": "module",
+    "main": "dist/index.js",
+    "bin": {
+        "azure-updates-mcp": "dist/index.js"
+    },
+    "engines": {
+        "node": ">=18.0.0"
+    },
+    "scripts": {
+        "build": "tsc",
+        "dev": "tsx src/index.ts",
+        "test": "vitest run",
+        "test:watch": "vitest",
+        "lint": "eslint .",
+        "lint:fix": "eslint . --fix"
+    },
+    "keywords": [
+        "mcp",
+        "azure",
+        "updates",
+        "model-context-protocol",
+        "ai",
+        "search"
+    ],
+    "author": "",
+    "license": "MIT",
+    "dependencies": {
+        "@modelcontextprotocol/sdk": "^1.25.0",
+        "better-sqlite3": "^12.5.0",
+        "turndown": "^7.2.2"
+    },
+    "devDependencies": {
+        "@eslint/js": "^9.39.2",
+        "@types/better-sqlite3": "^7.6.13",
+        "@types/node": "^25.0.2",
+        "@types/turndown": "^5.0.6",
+        "@typescript-eslint/eslint-plugin": "^8.50.0",
+        "@typescript-eslint/parser": "^8.50.0",
+        "eslint": "^9.39.2",
+        "tsx": "^4.21.0",
+        "typescript": "^5.9.3",
+        "typescript-eslint": "^8.50.0",
+        "vitest": "^4.0.15"
+    }
+}
