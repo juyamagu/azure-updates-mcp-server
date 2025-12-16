@@ -16,7 +16,7 @@ An MCP (Model Context Protocol) server that provides AI assistants with seamless
 🔄 **Automatic Sync** - Differential synchronization keeps data fresh (configurable interval, default 24h)  
 📊 **Help Resource** - Expose all available filters and data freshness to help AI construct queries  
 
-## Quick Start
+## Setup
 
 **Step 1: Get the tarball package**
 
@@ -61,6 +61,35 @@ Or, simply run with `npx` without global installation:
   }
 }
 ```
+
+## Usage
+
+All you need is to ask your AI assistant to use the `search_azure_updates` tool with natural language queries and optional filters. 
+
+```txt
+What are the latest security updates related to OAuth authentication in Azure since January 2025? Up to 10 results, please.
+```
+
+Your assistant automatically constructs the appropriate parameters and calls the MCP server like this:
+
+```json
+{
+  "tool": "search_azure_updates",
+  "parameters": {
+    "query": "OAuth authentication security",
+    "filters": {
+      "tags": ["Security"],
+      "dateFrom": "2025-01-01"
+    },
+    "limit": 10
+  }
+}
+```
+
+Sample agent definitions for GitHub Copilot can be found in:
+
+- [.github/agents/azupdates.retire.agent.md](./.github/agents/azupdates.retire.agent.md)
+- [.github/agents/azupdates.update.agent.md](./.github/agents/azupdates.update.agent.md)
 
 ## Configuration
 
