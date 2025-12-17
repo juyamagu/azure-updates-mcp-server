@@ -10,12 +10,20 @@
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { join } from 'path';
 import { homedir } from 'os';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
 
 import { initializeDatabase, closeDatabase } from './database/database.js';
 import { createMCPServer } from './server.js';
 import { performSync, isSyncNeeded } from './services/sync.service.js';
 import { deleteUpdatesBeforeRetentionDate } from './database/queries.js';
 import * as logger from './utils/logger.js';
+
+// Get version from package.json
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+const packageJson = JSON.parse(readFileSync(join(__dirname, '../package.json'), 'utf-8'));
 
 // Configuration from environment variables
 const DATABASE_PATH = process.env.DATABASE_PATH ?? join(homedir(), '.azure-updates-mcp', 'azure-updates.db');
@@ -24,7 +32,7 @@ const SYNC_STALENESS_HOURS = parseInt(process.env.SYNC_STALENESS_HOURS ?? '24', 
 const SYNC_ON_STARTUP = (process.env.SYNC_ON_STARTUP ?? 'true').toLowerCase() === 'true';
 const DATA_RETENTION_START_DATE = process.env.DATA_RETENTION_START_DATE ?? '2022-01-01';
 const SERVER_NAME = 'azure-updates-mcp-server';
-const SERVER_VERSION = '1.0.0';
+const SERVER_VERSION = packageJson.version;
 
 /**
  * Main entry point

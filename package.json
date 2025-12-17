@@ -12,6 +12,7 @@
     },
     "scripts": {
         "build": "tsc && node scripts/copy-schema.mjs",
+        "prepare": "npm run build",
         "start": "node dist/index.js",
         "dev": "tsx src/index.ts",
         "dev:mock": "tsx tests/mock-api/server.ts",
@@ -43,6 +44,13 @@
         "url": "https://github.com/juyamagu/azure-updates-mcp-server/issues"
     },
     "homepage": "https://github.com/juyamagu/azure-updates-mcp-server#readme",
+    "files": [
+        "dist/",
+        "README.md",
+        "README.ja.md",
+        "LICENSE",
+        "CHANGELOG.md"
+    ],
     "dependencies": {
         "@modelcontextprotocol/sdk": "^1.25.0",
         "better-sqlite3": "^12.5.0",
