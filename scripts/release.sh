@@ -31,12 +31,18 @@ git pull origin main
 CURRENT_VERSION=$(node -p "require('./package.json').version")
 echo -e "${YELLOW}Current version: ${CURRENT_VERSION}${NC}"
 
+# Calculate version bumps manually to avoid npm version --dry-run side effects
+IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT_VERSION"
+NEXT_PATCH="${MAJOR}.${MINOR}.$((PATCH + 1))"
+NEXT_MINOR="${MAJOR}.$((MINOR + 1)).0"
+NEXT_MAJOR="$((MAJOR + 1)).0.0"
+
 # Prompt for version bump type
 echo ""
 echo "Select version bump type:"
-echo "  1) patch (${CURRENT_VERSION} -> $(npm version patch --no-git-tag-version --dry-run | sed 's/v//'))"
-echo "  2) minor (${CURRENT_VERSION} -> $(npm version minor --no-git-tag-version --dry-run | sed 's/v//'))"
-echo "  3) major (${CURRENT_VERSION} -> $(npm version major --no-git-tag-version --dry-run | sed 's/v//'))"
+echo "  1) patch (${CURRENT_VERSION} -> ${NEXT_PATCH})"
+echo "  2) minor (${CURRENT_VERSION} -> ${NEXT_MINOR})"
+echo "  3) major (${CURRENT_VERSION} -> ${NEXT_MAJOR})"
 echo ""
 read -p "Enter choice (1-3): " choice
 
@@ -58,7 +64,6 @@ esac
 
 # Bump version
 echo -e "${GREEN}🔢 Bumping version...${NC}"
-echo -e "${YELLOW}Running: npm version ${VERSION_TYPE} --no-git-tag-version${NC}"
 npm version "$VERSION_TYPE" --no-git-tag-version
 
 NEW_VERSION=$(node -p "require('./package.json').version")
