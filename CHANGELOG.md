@@ -7,15 +7,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Changed
-
-- **Default Sort Order**: Changed default `sortBy` to always be `modified:desc` (newest first) for consistency. Previously defaulted to relevance-based sorting for keyword searches.
-- **Removed relevance option**: Removed `relevance` from `sortBy` enum. All searches now use explicit sort orders.
-
-### Fixed
-
-- **Critical Sync Bug**: Changed differential sync filter from `modified gt` to `modified ge` to prevent missing updates published at the same timestamp. Previously, if multiple updates were published at exactly the same time, only the first one would be synced, and others would be permanently missed in subsequent syncs.
-
 ### Planned
 
 - Pre-populated database snapshot for instant startup
@@ -23,6 +14,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Export functionality (JSON, CSV, Markdown)
 - Historical versioning of updates
 - Multi-language support
+
+## [1.2.0] - 2025-12-17
+
+### Added
+
+- **Phrase Search**: FTS5 phrase search with double-quote syntax for exact phrase matching (`"Azure Virtual Machines"`)
+- **Structured Filters**: Array filters for tags, products, and productCategories with AND semantics
+  - Results must contain ALL specified filter values
+  - Implemented with SQL EXISTS subqueries for optimal performance
+- **E2E Test Suite**: Comprehensive end-to-end tests for MCP server lifecycle (15 new tests)
+  - Server initialization and tool registration
+  - Tool invocation via MCP request handlers
+  - Resource discovery and retrieval
+  - Error handling for unknown tools/resources
+- **MCP Best Practices Documentation**: Guide for designing effective MCP tools (docs/mcp-best-practices.md)
+
+### Changed
+
+- **Default Sort Order**: Changed default `sortBy` to always be `modified:desc` (newest first) for consistency
+- **Removed relevance option**: Removed `relevance` from `sortBy` enum (phrase search provides better relevance)
+- Tool descriptions enhanced to emphasize token efficiency and phrase search syntax
+- Updated `url` field in responses: includes direct link to Azure updates page
+- Response format: `description` field now consistently returns Markdown (removed `descriptionMarkdown` field)
+
+### Fixed
+
+- **Critical Sync Bug**: Changed differential sync filter from `modified gt` to `modified ge` to prevent missing updates at same timestamp
+- Type safety improvements in filter handling (explicit property copying vs loops)
+
+### Improved
+
+- Test coverage increased to 84.64% (228 tests total, all passing)
+- Enhanced query validation with descriptive error messages
+- Better code organization with extracted helper functions for filter building
 
 ## [1.1.0] - 2025-12-17
 

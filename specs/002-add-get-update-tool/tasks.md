@@ -147,32 +147,51 @@
 
 **Independent Test**: Call `search_azure_updates` with phrase syntax ("exact phrase") and verify exact matching, call with filters.tags and verify AND semantics
 
-### Implementation for User Story 4
+### Implementation for User Story 4 ✅
 
-- [ ] T051 [P] [US4] Modify sanitizeFtsQuery() in src/services/search.service.ts to preserve quoted phrases and support phrase search syntax
-- [ ] T052 [US4] Update FTS5 query generation in src/services/search.service.ts to use phrase search for quoted text (exact matching)
-- [ ] T053 [P] [US4] Add tags filter to SearchFilters type in src/models/search-query.ts with string[] type
-- [ ] T054 [P] [US4] Add products filter to SearchFilters type in src/models/search-query.ts with string[] type
-- [ ] T055 [P] [US4] Add productCategories filter to SearchFilters type in src/models/search-query.ts with string[] type
-- [ ] T056 [US4] Implement buildFilterClauses() in src/services/search.service.ts to support tags/products/productCategories filters with AND semantics (SQL IN with COUNT)
-- [ ] T057 [US4] Update tool schema in src/server.ts to add tags, products, productCategories filter parameters with array type and AND semantics description
-- [ ] T058 [US4] Update tool description in src/server.ts to mention phrase search syntax ("exact phrase") and filter AND semantics
-- [ ] T059 [P] [US4] Add unit tests in tests/unit/services/search.service.test.ts for phrase search syntax (quoted phrases, mixed phrases and keywords)
-- [ ] T060 [P] [US4] Add unit tests in tests/unit/tools/search-azure-updates.test.ts for tags filter with AND semantics (single tag, multiple tags, no match)
-- [ ] T061 [P] [US4] Add unit tests in tests/unit/tools/search-azure-updates.test.ts for products filter with AND semantics
-- [ ] T062 [P] [US4] Add unit tests in tests/unit/tools/search-azure-updates.test.ts for productCategories filter with AND semantics
-- [ ] T063 [P] [US4] Add integration test in tests/integration/tools-integration.test.ts for phrase search with real data
-- [ ] T064 [P] [US4] Add integration test in tests/integration/tools-integration.test.ts for combined filters (tags + products + categories)
-- [ ] T065 [US4] Verify test coverage ≥80% for phrase search and filter logic
+- [X] T051 [P] [US4] Modify sanitizeFtsQuery() in src/services/search.service.ts to preserve quoted phrases and support phrase search syntax
+- [X] T052 [US4] Update FTS5 query generation in src/services/search.service.ts to use phrase search for quoted text (exact matching)
+- [X] T053 [P] [US4] Add tags filter to SearchFilters type in src/models/search-query.ts with string[] type
+- [X] T054 [P] [US4] Add products filter to SearchFilters type in src/models/search-query.ts with string[] type
+- [X] T055 [P] [US4] Add productCategories filter to SearchFilters type in src/models/search-query.ts with string[] type
+- [X] T056 [US4] Implement buildFilterClauses() in src/services/search.service.ts to support tags/products/productCategories filters with AND semantics (SQL EXISTS with subquery)
+- [X] T057 [US4] Update tool schema in src/server.ts to add tags, products, productCategories filter parameters with array type and AND semantics description
+- [X] T058 [US4] Update tool description in src/server.ts to mention phrase search syntax ("exact phrase") and filter AND semantics
+- [X] T059 [P] [US4] Add unit tests in tests/unit/services/search.service.test.ts for phrase search syntax (quoted phrases, mixed phrases and keywords)
+- [X] T060 [P] [US4] Add unit tests in tests/unit/tools/search-azure-updates.test.ts for tags filter with AND semantics (single tag, multiple tags, no match)
+- [X] T061 [P] [US4] Add unit tests in tests/unit/tools/search-azure-updates.test.ts for products filter with AND semantics
+- [X] T062 [P] [US4] Add unit tests in tests/unit/tools/search-azure-updates.test.ts for productCategories filter with AND semantics
+- [X] T063 [P] [US4] Add integration test in tests/integration/tools-integration.test.ts for phrase search with real data
+- [X] T064 [P] [US4] Add integration test in tests/integration/tools-integration.test.ts for combined filters (tags + products + categories)
+- [X] T065 [US4] Verify test coverage ≥80% for phrase search and filter logic (achieved 84.64%)
 
-**Checkpoint**: Phrase search and structured filters fully functional
+**Checkpoint**: Phrase search and structured filters fully functional ✅
 
-### Guide Resource Updates for Phrase Search
+### Guide Resource Updates for Phrase Search ✅
 
-- [ ] T066 [P] Add phrase search examples in src/resources/guide.resource.ts (exact phrase syntax with double quotes)
-- [ ] T067 [P] Add filter examples in src/resources/guide.resource.ts (tags, products, categories with AND semantics)
-- [ ] T068 Update query tips in src/resources/guide.resource.ts to explain FTS5 search scope (title + description only)
-- [ ] T069 Add usage example in src/resources/guide.resource.ts showing combined phrase search and filters
+- [X] T066 [P] Add phrase search examples in src/resources/guide.resource.ts (exact phrase syntax with double quotes)
+- [X] T067 [P] Add filter examples in src/resources/guide.resource.ts (tags, products, categories with AND semantics)
+- [X] T068 Update query tips in src/resources/guide.resource.ts to explain FTS5 search scope (title + description only)
+- [X] T069 Add usage example in src/resources/guide.resource.ts showing combined phrase search and filters
+
+---
+
+## Phase 9: End-to-End Testing
+
+**Purpose**: Add comprehensive E2E tests for MCP server lifecycle
+
+### MCP Server E2E Tests
+
+- [X] T070 [P] Create E2E test suite in tests/integration/mcp-e2e.test.ts for MCP server initialization and tool registration
+- [X] T071 [P] Add E2E tests for tool discovery (tools/list) and schema validation
+- [X] T072 [P] Add E2E tests for search_azure_updates tool invocation via MCP request handlers
+- [X] T073 [P] Add E2E tests for get_azure_update tool invocation via MCP request handlers
+- [X] T074 [P] Add E2E test for two-tool workflow (search → get) through MCP server
+- [X] T075 [P] Add E2E tests for resource discovery and retrieval (azure-updates://guide)
+- [X] T076 [P] Add E2E tests for error handling (unknown tools, unknown resources)
+- [X] T077 Verify all E2E tests pass with mock data (15 tests added, 228 total tests passing)
+
+**Checkpoint**: Complete E2E testing coverage for MCP server lifecycle ✅
 
 ---
 
@@ -188,6 +207,7 @@
 - **Integration (Phase 6)**: Depends on all user stories being complete
 - **Polish (Phase 7)**: Depends on Integration completion
 - **User Story 4 (Phase 8)**: Depends on User Story 2 (T012-T015) and User Story 3 (T019-T030) - extends search functionality with phrase search and filters
+- **E2E Testing (Phase 9)**: Depends on all previous phases - validates complete MCP server lifecycle
 
 ### User Story Dependencies
 
@@ -209,6 +229,9 @@
 **US4 (Phrase Search & Filters)**:
 - T051, T052 (phrase search) → T053, T054, T055 (filter types) in parallel → T056 (filter implementation) → T057, T058 (schema updates) → T059, T060, T061, T062, T063, T064 (tests) in parallel → T065 (coverage) → T066, T067, T068, T069 (guide updates) in parallel
 
+**Phase 9 (E2E Testing)**:
+- T070, T071, T072, T073, T074, T075, T076 (all E2E tests) in parallel → T077 (verify all pass)
+
 ### Parallel Opportunities
 
 **Foundational Phase**: T003 and T004 can run in parallel (different type definitions)
@@ -224,6 +247,8 @@
 **Integration Phase**: T031-T035 (guide resource changes) all in parallel, T039-T041 (integration tests) in parallel
 
 **Polish Phase**: T043-T047 all in parallel (independent quality checks)
+
+**E2E Testing Phase**: T070-T076 all in parallel (independent E2E test cases)
 
 ---
 
@@ -255,6 +280,8 @@ Task T029: "Test retirementDate sorting edge cases"
    - **Validate independently**: Retirement date filtering and sorting work correctly
 5. **Phase 6**: Integration & Documentation (T031-T042)
 6. **Phase 7**: Polish & Quality (T043-T050)
+7. **Phase 8**: Phrase Search & Filters (T051-T069)
+8. **Phase 9**: E2E Testing (T070-T077)
 
 ### Parallel Team Strategy
 
@@ -283,6 +310,10 @@ If multiple developers available:
 - Phrase search with FTS5 (US4)
 - Structured filters for tags/products/categories with AND semantics (US4)
 
+**Production-ready deliverable**: Add Phase 9 (T070-T077)
+- Complete E2E testing for MCP server lifecycle
+- 228 tests total with 84.64% coverage
+
 ---
 
 ## Notes
@@ -293,4 +324,5 @@ If multiple developers available:
 - Constitution compliance: strict TypeScript, ESLint, JSDoc, <10 complexity
 - Each user story can be validated independently before proceeding
 - Phase 8 (US4) refines search behavior: query parameter searches only title+description (FTS5 with phrase support), filters provide structured filtering for metadata with AND semantics
-- Total estimated LOC: ~740 (100 get tool + 50 search mods + 40 guide + 200 unit tests + 100 integration tests + 50 polish + 120 phrase search + 80 filters)
+- Phase 9 adds comprehensive E2E tests validating MCP server lifecycle (initialization, tool registration, invocation, resource handling, error cases)
+- Total LOC: ~1140 (100 get tool + 50 search mods + 40 guide + 200 unit tests + 100 integration tests + 50 polish + 120 phrase search + 80 filters + 400 E2E tests)
