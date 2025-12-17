@@ -43,7 +43,7 @@ npm install -g github:juyamagu/azure-updates-mcp-server
 ```jsonc
 {
   "servers": {
-    "azure-updates-mcp": {
+    "azure-updates": {
       "command": "azure-updates-mcp-server"
       // 以下の環境変数はオプションです。必要に応じて設定してください
       // "env": {
@@ -63,7 +63,7 @@ npm install -g github:juyamagu/azure-updates-mcp-server
 ```jsonc
 {
   "servers": {
-    "azure-updates-mcp": {
+    "azure-updates": {
       "command": "npx",
       "args": ["-y", "github:juyamagu/azure-updates-mcp-server"]
     }

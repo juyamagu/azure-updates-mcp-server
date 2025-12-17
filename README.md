@@ -46,7 +46,7 @@ Then configure VS Code (`.vscode/mcp.json`):
 ```jsonc
 {
   "servers": {
-    "azure-updates-mcp": {
+    "azure-updates": {
       "command": "azure-updates-mcp-server"
       // Optional environment variables:
       // "env": {
@@ -68,7 +68,7 @@ For quick testing without installation:
 ```jsonc
 {
   "servers": {
-    "azure-updates-mcp": {
+    "azure-updates": {
       "command": "npx",
       "args": ["-y", "github:juyamagu/azure-updates-mcp-server"]
     }
