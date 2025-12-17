@@ -37,9 +37,8 @@ echo "Select version bump type:"
 echo "  1) patch (${CURRENT_VERSION} -> $(npm version patch --no-git-tag-version --dry-run | sed 's/v//'))"
 echo "  2) minor (${CURRENT_VERSION} -> $(npm version minor --no-git-tag-version --dry-run | sed 's/v//'))"
 echo "  3) major (${CURRENT_VERSION} -> $(npm version major --no-git-tag-version --dry-run | sed 's/v//'))"
-echo "  4) custom version"
 echo ""
-read -p "Enter choice (1-4): " choice
+read -p "Enter choice (1-3): " choice
 
 case $choice in
     1)
@@ -51,10 +50,6 @@ case $choice in
     3)
         VERSION_TYPE="major"
         ;;
-    4)
-        read -p "Enter version number (e.g., 1.3.0): " CUSTOM_VERSION
-        VERSION_TYPE="$CUSTOM_VERSION"
-        ;;
     *)
         echo -e "${RED}Invalid choice${NC}"
         exit 1
@@ -63,11 +58,7 @@ esac
 
 # Bump version
 echo -e "${GREEN}🔢 Bumping version...${NC}"
-if [ "$choice" = "4" ]; then
-    npm version "$VERSION_TYPE" --no-git-tag-version
-else
-    npm version "$VERSION_TYPE" --no-git-tag-version
-fi
+npm version "$VERSION_TYPE" --no-git-tag-version
 
 NEW_VERSION=$(node -p "require('./package.json').version")
 echo -e "${GREEN}New version: ${NEW_VERSION}${NC}"
