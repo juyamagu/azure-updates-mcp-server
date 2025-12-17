@@ -6,7 +6,7 @@
         "lib": [
             "ES2022"
         ],
-        "rootDir": "./",
+        "rootDir": "./src",
         "outDir": "./dist",
         "strict": true,
         "esModuleInterop": true,
@@ -23,9 +23,7 @@
         "allowSyntheticDefaultImports": true
     },
     "include": [
-        "src/**/*",
-        "tests/**/*",
-        "scripts/**/*"
+        "src/**/*"
     ],
     "exclude": [
         "node_modules",
