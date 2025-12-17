@@ -3,6 +3,8 @@
 Auto-generated from all feature plans. Last updated: 2025-12-16
 
 ## Active Technologies
+- TypeScript 5.x (Node.js 18+) + @modelcontextprotocol/sdk, better-sqlite3 (existing) (002-add-get-update-tool)
+- SQLite (existing schema, no changes required) (002-add-get-update-tool)
 
 - TypeScript 5.x (Node.js 18+ runtime) + @modelcontextprotocol/sdk (MCP server framework), better-sqlite3 (embedded SQLite with FTS5 support), turndown (HTML-to-Markdown conversion), node-cron (scheduled sync) (001-azure-updates-mcp)
 
@@ -22,6 +24,7 @@ npm test && npm run lint
 TypeScript 5.x (Node.js 18+ runtime): Follow standard conventions
 
 ## Recent Changes
+- 002-add-get-update-tool: Added TypeScript 5.x (Node.js 18+) + @modelcontextprotocol/sdk, better-sqlite3 (existing)
 
 - 001-azure-updates-mcp: Added TypeScript 5.x (Node.js 18+ runtime) + @modelcontextprotocol/sdk (MCP server framework), better-sqlite3 (embedded SQLite with FTS5 support), turndown (HTML-to-Markdown conversion), node-cron (scheduled sync)
 

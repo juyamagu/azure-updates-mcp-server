@@ -1,8 +1,8 @@
 /**
  * MCP Tool Handler: search_azure_updates
  * 
- * Unified tool for searching, filtering, and retrieving Azure updates.
- * Supports natural language queries, structured filters, and get-by-ID operations.
+ * Tool for searching and filtering Azure updates.
+ * Supports natural language queries and structured filters.
  * 
  * @example Natural language search with filters
  * ```json
@@ -37,13 +37,6 @@
  * }
  * ```
  * 
- * @example Get update by ID
- * ```json
- * {
- *   "id": "AZ-123e4567-e89b-12d3-a456-426614174000"
- * }
- * ```
- * 
  * @example Complex multi-filter search
  * ```json
  * {
@@ -73,7 +66,7 @@ const VALID_AVAILABILITY_RINGS = [
     'Private Preview',
     'Retirement',
 ] as const;
-const DEFAULT_LIMIT = 50;
+const DEFAULT_LIMIT = 20;
 const MIN_LIMIT = 1;
 const MAX_LIMIT = 100;
 const MIN_OFFSET = 0;
@@ -83,7 +76,6 @@ const MIN_OFFSET = 0;
  */
 interface ToolInput {
     query?: string;
-    id?: string;
     filters?: {
         tags?: string[];
         productCategories?: string[];
@@ -92,7 +84,10 @@ interface ToolInput {
         availabilityRing?: string;
         dateFrom?: string;
         dateTo?: string;
+        retirementDateFrom?: string;
+        retirementDateTo?: string;
     };
+    sortBy?: string;
     limit?: number;
     offset?: number;
 }
@@ -164,7 +159,6 @@ export function handleSearchAzureUpdates(
         // T030: Log search parameters
         logger.info('Executing search', {
             hasKeywordQuery: !!searchQuery.query,
-            hasId: !!searchQuery.id,
             hasFilters: !!searchQuery.filters,
             limit: searchQuery.limit,
             offset: searchQuery.offset,
@@ -181,12 +175,12 @@ export function handleSearchAzureUpdates(
             queryTime,
         });
 
-        // Format response
+        // Format response (lightweight: no description fields)
+        // Returns AzureUpdateSearchSummary[] for token efficiency
         const formattedResponse = {
             results: response.results.map(update => ({
                 id: update.id,
                 title: update.title,
-                description: update.descriptionMarkdown || update.description,
                 status: update.status,
                 tags: update.tags,
                 productCategories: update.productCategories,
@@ -252,6 +246,11 @@ function validateInput(args: unknown): ValidationResult {
     // Validate query parameters
     validateQueryParams(input, errors);
 
+    // Validate sortBy parameter
+    if (input.sortBy !== undefined) {
+        validateSortBy(input.sortBy, errors);
+    }
+
     // Validate filters
     if (input.filters !== undefined) {
         validateFilters(input.filters, errors);
@@ -264,7 +263,7 @@ function validateInput(args: unknown): ValidationResult {
     // Build SearchQuery
     const searchQuery: SearchQuery = {
         query: input.query,
-        id: input.id,
+        sortBy: input.sortBy as SearchQuery['sortBy'],
         limit: input.limit ?? DEFAULT_LIMIT,
         offset: input.offset ?? MIN_OFFSET,
     };
@@ -285,16 +284,22 @@ function validateInput(args: unknown): ValidationResult {
 function buildSearchFilters(inputFilters: ToolInput['filters']): SearchFilters {
     if (!inputFilters) return {};
 
-    // Use object spread to simplify and reduce complexity
-    return {
-        ...(inputFilters.tags && { tags: inputFilters.tags }),
-        ...(inputFilters.productCategories && { productCategories: inputFilters.productCategories }),
-        ...(inputFilters.products && { products: inputFilters.products }),
-        ...(inputFilters.status && { status: inputFilters.status }),
-        ...(inputFilters.availabilityRing && { availabilityRing: inputFilters.availabilityRing }),
-        ...(inputFilters.dateFrom && { dateFrom: inputFilters.dateFrom }),
-        ...(inputFilters.dateTo && { dateTo: inputFilters.dateTo }),
-    };
+    const filters: SearchFilters = {};
+
+    // Copy string filters
+    if (inputFilters.status) filters.status = inputFilters.status;
+    if (inputFilters.availabilityRing) filters.availabilityRing = inputFilters.availabilityRing;
+    if (inputFilters.dateFrom) filters.dateFrom = inputFilters.dateFrom;
+    if (inputFilters.dateTo) filters.dateTo = inputFilters.dateTo;
+    if (inputFilters.retirementDateFrom) filters.retirementDateFrom = inputFilters.retirementDateFrom;
+    if (inputFilters.retirementDateTo) filters.retirementDateTo = inputFilters.retirementDateTo;
+
+    // Copy array filters
+    if (inputFilters.tags) filters.tags = inputFilters.tags;
+    if (inputFilters.products) filters.products = inputFilters.products;
+    if (inputFilters.productCategories) filters.productCategories = inputFilters.productCategories;
+
+    return filters;
 }
 
 /**
@@ -322,7 +327,7 @@ function validatePagination(input: ToolInput, errors: string[]): void {
 }
 
 /**
- * Validate query and ID parameters
+ * Validate query parameters
  * 
  * @param input Tool input
  * @param errors Error array to push errors to
@@ -331,9 +336,31 @@ function validateQueryParams(input: ToolInput, errors: string[]): void {
     if (input.query !== undefined && typeof input.query !== 'string') {
         errors.push('query must be a string');
     }
+}
 
-    if (input.id !== undefined && typeof input.id !== 'string') {
-        errors.push('id must be a string');
+/**
+ * Validate sortBy parameter
+ * 
+ * @param sortBy Sort parameter value
+ * @param errors Error array to push errors to
+ */
+function validateSortBy(sortBy: unknown, errors: string[]): void {
+    if (typeof sortBy !== 'string') {
+        errors.push('sortBy must be a string');
+        return;
+    }
+
+    const validSortOptions = [
+        'modified:desc',
+        'modified:asc',
+        'created:desc',
+        'created:asc',
+        'retirementDate:asc',
+        'retirementDate:desc',
+    ];
+
+    if (!validSortOptions.includes(sortBy)) {
+        errors.push(`sortBy must be one of: ${validSortOptions.join(', ')}`);
     }
 }
 
@@ -374,6 +401,8 @@ function validateFilters(
     // Validate date filters
     validateDateFilter(filters.dateFrom, 'dateFrom', errors);
     validateDateFilter(filters.dateTo, 'dateTo', errors);
+    validateDateFilter(filters.retirementDateFrom, 'retirementDateFrom', errors);
+    validateDateFilter(filters.retirementDateTo, 'retirementDateTo', errors);
 }
 
 /**

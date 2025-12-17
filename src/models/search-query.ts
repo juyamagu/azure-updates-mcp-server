@@ -5,27 +5,41 @@
  */
 
 /**
+ * Sort options for search results
+ */
+export type SortBy =
+    | 'relevance' // BM25 relevance score (keyword queries only)
+    | 'modified:desc' // Most recently modified first
+    | 'modified:asc' // Oldest modified first
+    | 'created:desc' // Most recently created first
+    | 'created:asc' // Oldest created first
+    | 'retirementDate:asc' // Earliest retirement date first
+    | 'retirementDate:desc'; // Latest retirement date first
+
+/**
  * Search filters for Azure updates
  */
 export interface SearchFilters {
-    tags?: string[]; // Filter by tags (e.g., ['Retirements', 'Security'])
-    productCategories?: string[]; // Filter by product categories
-    products?: string[]; // Filter by specific products
     status?: string; // Filter by status (e.g., 'Active', 'Retired')
     availabilityRing?: string; // Filter by availability ring
-    dateFrom?: string; // ISO 8601 date - minimum date
-    dateTo?: string; // ISO 8601 date - maximum date
+    dateFrom?: string; // ISO 8601 date - include updates modified/available on or after this date
+    dateTo?: string; // ISO 8601 date - include updates modified/available on or before this date
+    retirementDateFrom?: string; // ISO 8601 date - include updates with retirement date on or after this date
+    retirementDateTo?: string; // ISO 8601 date - include updates with retirement date on or before this date
+    tags?: string[]; // Filter by tags - result must contain ALL specified tags (AND semantics)
+    products?: string[]; // Filter by products - result must contain ALL specified products (AND semantics)
+    productCategories?: string[]; // Filter by product categories - result must contain ALL specified categories (AND semantics)
 }
 
 /**
  * Search query parameters
  */
 export interface SearchQuery {
-    query?: string; // Natural language search query (optional)
-    id?: string; // Fetch specific update by ID (overrides all other params)
-    filters?: SearchFilters; // Structured filters
-    limit?: number; // Max results to return (default: 50)
-    offset?: number; // Skip this many results (for pagination)
+    query?: string; // Natural language search query - searches across title, description, tags, productCategories, products
+    filters?: SearchFilters; // Structured filters (AND logic)
+    sortBy?: SortBy; // Sort order with direction suffix
+    limit?: number; // Max results to return (default: 20, max: 100)
+    offset?: number; // Number of results to skip for pagination (default: 0)
 }
 
 /**

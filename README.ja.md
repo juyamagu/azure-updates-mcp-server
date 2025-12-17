@@ -28,12 +28,12 @@ npm install -g ./azure-updates-mcp-server-{version}.tgz
 
 **ステップ 3: MCP サーバーの起動**
 
-`azure-updates-mcp-server` コマンドで MCP サーバーを起動できます。VS Code を使用している場合、以下の設定でサーバーを起動します:
+`azure-updates-mcp-server` コマンドで MCP サーバーを起動できます。VS Code を使用している場合、以下の設定 (`.vscode/mcp.json`) でサーバーを起動します:
 
 ```jsonc
 {
-  "cline.mcpServers": {
-    "azure-updates": {
+  "servers": {
+    "azure-updates-mcp": {
       "command": "azure-updates-mcp-server",
       // 以下の環境変数はオプションです。必要に応じて設定してください
       // "env": {
@@ -45,14 +45,17 @@ npm install -g ./azure-updates-mcp-server-{version}.tgz
   }
 }
 ```
+
+> **⚠️ 注意**: 初回起動時にはローカルキャッシュへのデータ同期が行われるため、検索できるようになるまで数分かかる場合があります。同期が完了すると、以降のクエリは高速に応答します。
+
 ### 代替方法: npx を使用
 
 グローバルインストールせずに `npx` で実行することもできます:
 
 ```jsonc
 {
-  "cline.mcpServers": {
-    "azure-updates": {
+  "servers": {
+    "azure-updates-mcp": {
       "command": "npx",
       "args": ["~/azure-updates-mcp-server-{version}.tgz"],
     }
@@ -106,15 +109,19 @@ GitHub Copilot 用のサンプルエージェント定義は以下にありま�
 
 ## 利用可能なツール
 
-### `search_azure_updates`
+### 2 ツールアーキテクチャ
 
-自然言語クエリまたは構造化フィルタを使用して Azure 更新情報を検索、フィルタリング、取得します。
+このサーバーは、効率的な検索と詳細取得のための2ツールパターンを提供します:
 
-**主なパラメータ:**
-- `query`: 自然言語またはキーワード検索
-- `id`: ID で特定の更新情報を取得
-- `filters`: タグ、カテゴリ、製品、日付、ステータス、可用性リング
-- `limit`: 最大結果数 (1-100、デフォルト: 50)
+#### 1. `search_azure_updates` - 軽量な検索
+
+Azure 更新情報を検索・フィルタリングして関連するアイテムを見つけます。**メタデータのみ**を返し(説明文なし)、トークン使用量を 80% 削減します。
+
+**主な機能:**
+- **フレーズ検索**: 引用符で完全一致フレーズを検索 (`"Azure Virtual Machines"`)
+- **FTS5 検索**: BM25 関連性ランキングでタイトル+説明を検索
+- **構造化フィルタ**: タグ、製品、カテゴリ (AND 演算)、日付、ステータス
+- **ソート**: 更新日、作成日、廃止日、関連性でソート
 
 **例:**
 ```json
@@ -122,11 +129,27 @@ GitHub Copilot 用のサンプルエージェント定義は以下にありま�
   "query": "OAuth authentication security",
   "filters": {
     "tags": ["Security"],
+    "productCategories": ["Compute"],
     "dateFrom": "2025-01-01"
   },
   "limit": 10
 }
 ```
+
+#### 2. `get_azure_update` - 完全な詳細情報
+
+Markdown 形式の完全な説明文と URL を含む、更新情報の全詳細を取得します。
+
+**例:**
+```json
+{
+  "id": "536699"
+}
+```
+
+**推奨ワークフロー:**
+1. `search_azure_updates` で関連する更新情報を検索
+2. `get_azure_update` で選択したアイテムの完全な詳細を取得
 
 その他の例については、`azure-updates://guide` リソース (MCP プロトコルを通じて配布) を参照してください。
 
@@ -183,6 +206,7 @@ FTS5 全文検索を備えたローカル SQLite レプリケーションによ�
 
 - [開発ガイド](./docs/development.md) - コントリビューションとテスト
 - [トラブルシューティング](./docs/troubleshooting.md) - 一般的な問題
+- [MCP ベストプラクティス](./docs/mcp-best-practices.md) - ツール設計ガイドライン
 - [Azure Updates API マニュアル](./docs/azure-updates-api-manual.md) - API リファレンス
 
 ## ライセンス

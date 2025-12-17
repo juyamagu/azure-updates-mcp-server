@@ -60,6 +60,66 @@ export interface FetchOptions {
 }
 
 /**
+ * State for tracking pagination progress
+ */
+interface PaginationState {
+    allUpdates: AzureUpdate[];
+    page: number;
+    skip: number;
+    nextLink: string | undefined;
+    totalCount: number | undefined;
+}
+
+/**
+ * Check if pagination should continue
+ */
+function shouldContinuePagination(
+    state: PaginationState,
+    updates: AzureUpdate[],
+    maxResults: number | undefined,
+    pageSize: number
+): boolean {
+    // Stop if we've reached the requested limit
+    if (maxResults && state.allUpdates.length >= maxResults) {
+        logger.info('Reached requested limit', { limit: maxResults });
+        return false;
+    }
+
+    // Continue if server provides nextLink
+    if (state.nextLink) {
+        return true;
+    }
+
+    // Stop conditions for $skip-based pagination
+    if (updates.length === 0) return false;
+    if (updates.length > pageSize) return false;
+    if (state.totalCount !== undefined && state.skip >= state.totalCount) return false;
+    if (updates.length < pageSize) return false;
+
+    return true;
+}
+
+/**
+ * Fetch a single page of updates
+ */
+async function fetchPage(
+    requestUrl: string
+): Promise<AzureUpdatesApiResponse> {
+    const response = await withRetry(
+        () => fetchWithTimeout(requestUrl, REQUEST_TIMEOUT_MS),
+        {
+            maxRetries: 3,
+            initialDelayMs: 1000,
+            maxDelayMs: 10000,
+            backoffMultiplier: 2,
+            retryableErrors: ['network', 'timeout', '503', '429'],
+        }
+    );
+
+    return response.json() as Promise<AzureUpdatesApiResponse>;
+}
+
+/**
  * Fetch Azure updates from the API with pagination
  * 
  * @param options Fetch options for filtering and pagination
@@ -69,12 +129,6 @@ export async function fetchAzureUpdates(
     options: FetchOptions = {}
 ): Promise<AzureUpdate[]> {
     const startTime = Date.now();
-    const allUpdates: AzureUpdate[] = [];
-    let page = 1;
-    let nextLink: string | undefined;
-    let skip = 0;
-    let totalCount: number | undefined;
-
     const maxResults = options.limit;
     const pageSize = Math.min(DEFAULT_PAGE_SIZE, maxResults ?? DEFAULT_PAGE_SIZE);
 
@@ -85,80 +139,48 @@ export async function fetchAzureUpdates(
     });
 
     try {
-        // Build initial query URL
         const baseUrl = buildQueryUrl({ ...options, limit: pageSize }, 0);
+        const state: PaginationState = {
+            allUpdates: [],
+            page: 1,
+            skip: 0,
+            nextLink: undefined,
+            totalCount: undefined,
+        };
 
         while (true) {
-            // Use nextLink if available (server-driven pagination), otherwise use $skip-based pagination
-            const requestUrl = nextLink ?? (skip === 0 ? baseUrl : buildQueryUrl({ ...options, limit: pageSize }, skip));
+            const requestUrl = state.nextLink ?? (state.skip === 0 ? baseUrl : buildQueryUrl({ ...options, limit: pageSize }, state.skip));
 
             logger.debug('Fetching page from Azure Updates API', {
-                page,
+                page: state.page,
                 url: requestUrl,
-                skip,
+                skip: state.skip,
             });
 
-            // Fetch with retry logic
-            const response = await withRetry(
-                () => fetchWithTimeout(requestUrl, REQUEST_TIMEOUT_MS),
-                {
-                    maxRetries: 3,
-                    initialDelayMs: 1000,
-                    maxDelayMs: 10000,
-                    backoffMultiplier: 2,
-                    retryableErrors: ['network', 'timeout', '503', '429'],
-                }
-            );
+            const data = await fetchPage(requestUrl);
 
-            const data = await response.json() as AzureUpdatesApiResponse;
-
-            if (totalCount === undefined && typeof data['@odata.count'] === 'number') {
-                totalCount = data['@odata.count'];
+            // Update total count if provided
+            if (state.totalCount === undefined && typeof data['@odata.count'] === 'number') {
+                state.totalCount = data['@odata.count'];
             }
 
-            // Convert API records to our model
+            // Convert and accumulate updates
             const updates = data.value.map(convertApiRecordToUpdate);
-            allUpdates.push(...updates);
+            state.allUpdates.push(...updates);
 
             logger.info('Fetched page from Azure Updates API', {
-                page,
+                page: state.page,
                 recordsInPage: updates.length,
-                totalSoFar: allUpdates.length,
+                totalSoFar: state.allUpdates.length,
             });
 
-            // Check for next page
-            nextLink = data['@odata.nextLink'];
-            page++;
+            // Update pagination state
+            state.nextLink = data['@odata.nextLink'];
+            state.page++;
+            state.skip += updates.length;
 
-            // Stop if we've reached the requested overall limit
-            if (maxResults && allUpdates.length >= maxResults) {
-                logger.info('Reached requested limit', { limit: maxResults });
-                break;
-            }
-
-            // If server provides nextLink, follow it until exhausted
-            if (nextLink) {
-                continue;
-            }
-
-            // If the server ignored $top and returned more than we asked for, assume it returned everything.
-            if (updates.length > pageSize) {
-                break;
-            }
-
-            // No nextLink: fall back to $skip paging if it looks like pagination is supported.
-            // Stop when we get a short page, an empty page, or we reach @odata.count (if provided).
-            if (updates.length === 0) {
-                break;
-            }
-
-            skip += updates.length;
-
-            if (totalCount !== undefined && skip >= totalCount) {
-                break;
-            }
-
-            if (updates.length < pageSize) {
+            // Check if we should continue
+            if (!shouldContinuePagination(state, updates, maxResults, pageSize)) {
                 break;
             }
         }
@@ -166,19 +188,18 @@ export async function fetchAzureUpdates(
         const durationMs = Date.now() - startTime;
 
         logger.info('Completed Azure Updates API fetch', {
-            totalRecords: allUpdates.length,
-            pages: page - 1,
+            totalRecords: state.allUpdates.length,
+            pages: state.page - 1,
             durationMs,
         });
 
-        return allUpdates;
+        return state.allUpdates;
     } catch (error) {
         const err = error as Error;
         const durationMs = Date.now() - startTime;
 
         logger.errorWithStack('Azure Updates API fetch failed', err, {
             modifiedSince: options.modifiedSince,
-            totalRecordsFetched: allUpdates.length,
             durationMs,
         });
 
@@ -209,8 +230,9 @@ function buildQueryUrl(options: FetchOptions, skip: number = 0): string {
     }
 
     // Filter by modified date for differential sync
+    // Use 'ge' (>=) instead of 'gt' (>) to handle multiple updates with same timestamp
     if (options.modifiedSince) {
-        params.set('$filter', `modified gt ${options.modifiedSince}`);
+        params.set('$filter', `modified ge ${options.modifiedSince}`);
     }
 
     // Sort by newest first so initial pages contain recent updates
@@ -283,6 +305,7 @@ function convertApiRecordToUpdate(apiRecord: AzureUpdateApiRecord): AzureUpdate 
         id: apiRecord.id,
         title: apiRecord.title,
         description: apiRecord.description || '',
+        url: `https://azure.microsoft.com/en-us/updates/?id=${apiRecord.id}`,
         status: apiRecord.status || null,
         locale: apiRecord.locale || null,
         created: apiRecord.created,

@@ -164,8 +164,7 @@ export function getUpdateById(db: Database.Database, id: string): AzureUpdate | 
     SELECT 
       id, 
       title, 
-      description_html as description,
-      description_md as descriptionMarkdown,
+      description_md as description,
       status, 
       locale, 
       created, 
@@ -176,6 +175,9 @@ export function getUpdateById(db: Database.Database, id: string): AzureUpdate | 
 
     const update = updateStmt.get(id) as Partial<AzureUpdate> | undefined;
     if (!update) return null;
+
+    // Add URL field
+    update.url = `https://azure.microsoft.com/en-us/updates/?id=${id}`;
 
     // Fetch related data
     update.tags = getTagsForUpdate(db, id);

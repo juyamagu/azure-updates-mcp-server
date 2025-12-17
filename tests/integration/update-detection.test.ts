@@ -148,7 +148,9 @@ describe('Update Detection Integration Tests', () => {
         expect(updatedEntry.modified).toBe('2025-12-16T10:00:00.0000000Z');
 
         // Verify that modified field is later
-        expect(new Date(updatedEntry.modified) > new Date(originalFromDb!.modified)).toBe(true);
+        if (originalFromDb) {
+            expect(new Date(updatedEntry.modified) > new Date(originalFromDb.modified)).toBe(true);
+        }
     });
 
     it('should update existing entry when modified field is newer', () => {

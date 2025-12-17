@@ -95,7 +95,7 @@ export function generateGuideResource(db: Database.Database): GuideResourceData 
     const retentionStartDate = process.env.DATA_RETENTION_START_DATE || null;
 
     return {
-        overview: `Azure Updates MCP Server provides natural language search for Azure service updates, retirements, and feature announcements. Search across ${totalRecords.toLocaleString()} updates without learning OData syntax.`,
+        overview: `Azure Updates MCP Server provides natural language search for Azure service updates, retirements, and feature announcements. Search across ${totalRecords.toLocaleString()} updates using a two-tool architecture: search_azure_updates for lightweight discovery (metadata only), then get_azure_update for full details including descriptions.`,
 
         dataAvailability: {
             retentionStartDate,
@@ -114,40 +114,71 @@ export function generateGuideResource(db: Database.Database): GuideResourceData 
 
         usageExamples: [
             {
-                description: 'Natural language search with tag filter',
+                description: 'Phrase search: Find exact "Azure Virtual Machines" mentions',
                 query: {
-                    query: 'OAuth authentication security',
+                    query: '"Azure Virtual Machines" retirement',
+                    limit: 10,
+                },
+            },
+            {
+                description: 'Filter by tags with AND semantics (must have ALL specified tags)',
+                query: {
+                    query: 'security',
                     filters: {
-                        tags: ['Security'],
+                        tags: ['Security', 'Retirements'],
                     },
                     limit: 10,
                 },
             },
             {
-                description: 'Find retirements in Q1 2026 for Compute services',
+                description: 'Filter by products and categories (AND semantics for each array)',
                 query: {
                     filters: {
-                        tags: ['Retirements'],
-                        productCategories: ['Compute'],
-                        dateFrom: '2026-01-01',
-                        dateTo: '2026-03-31',
+                        products: ['Azure Key Vault'],
+                        productCategories: ['Security'],
+                    },
+                    sortBy: 'modified:desc',
+                    limit: 20,
+                },
+            },
+            {
+                description: 'Find upcoming retirements sorted by date (earliest first)',
+                query: {
+                    query: 'retirement',
+                    filters: {
+                        retirementDateFrom: '2026-01-01',
+                        retirementDateTo: '2026-12-31',
+                    },
+                    sortBy: 'retirementDate:asc',
+                    limit: 20,
+                },
+            },
+            {
+                description: 'Combined phrase search and filters',
+                query: {
+                    query: '"Azure Databricks" preview',
+                    filters: {
+                        tags: ['AI + machine learning'],
+                        productCategories: ['Analytics'],
                     },
                 },
             },
             {
-                description: 'Search for machine learning preview features',
+                description: 'Two-step workflow: search then get details',
                 query: {
-                    query: 'machine learning',
-                    filters: {
-                        availabilityRing: 'Preview',
-                        productCategories: ['AI + machine learning'],
+                    step1: {
+                        tool: 'search_azure_updates',
+                        params: {
+                            query: 'Azure SQL Database',
+                            limit: 5,
+                        },
                     },
-                },
-            },
-            {
-                description: 'Get specific update by ID',
-                query: {
-                    id: 'AZ-123e4567-e89b-12d3-a456-426614174000',
+                    step2: {
+                        tool: 'get_azure_update',
+                        params: {
+                            id: '<id_from_search_results>',
+                        },
+                    },
                 },
             },
         ],
@@ -160,13 +191,17 @@ export function generateGuideResource(db: Database.Database): GuideResourceData 
         },
 
         queryTips: [
-            'Use natural language queries like "show me security updates" or "find database retirements"',
-            'Combine keyword search with filters for precise results',
-            'Use dateFrom/dateTo for time range filtering (ISO 8601 format: YYYY-MM-DD)',
-            'Multiple values in array filters use OR logic within the same filter type',
-            'Different filter types are combined with AND logic',
-            'Set limit (max 100) and offset for pagination through large result sets',
-            'Relevance scores are returned for keyword searches to help identify best matches',
+            'Two-step workflow: Use search_azure_updates for discovery (returns lightweight metadata), then get_azure_update to fetch full descriptions',
+            'Phrase search: Use double quotes for exact matches (e.g., "Azure Virtual Machines" finds that exact phrase)',
+            'Without quotes: Words are matched with OR logic (e.g., security authentication matches "security" OR "authentication")',
+            'Combine phrase search with regular words: "Azure Databricks" preview',
+            'Structured filters: Use filters.tags, filters.products, filters.productCategories for precise filtering with AND semantics',
+            'Filter arrays require ALL values to match: tags: ["Security", "Retirements"] returns only updates with BOTH tags',
+            'sortBy parameter supports: modified:desc (default), modified:asc, created:desc/asc, retirementDate:desc/asc',
+            'Use retirementDateFrom/retirementDateTo to filter by retirement dates (ISO 8601: YYYY-MM-DD)',
+            'Use dateFrom/dateTo for filtering by modified/availability dates (ISO 8601: YYYY-MM-DD)',
+            'Set limit (default: 20, max: 100) and offset for pagination through large result sets',
+            'search_azure_updates returns lightweight metadata without descriptions to reduce token usage by 80%+',
         ],
     };
 }

@@ -1,0 +1,161 @@
+{
+    "name": "get_azure_update",
+    "description": "Retrieve a specific Azure update by its unique ID. Returns the complete update details including the full description content. Use this tool after searching with search_azure_updates to get detailed information about a specific update.",
+    "inputSchema": {
+        "type": "object",
+        "properties": {
+            "id": {
+                "type": "string",
+                "description": "The unique identifier of the Azure update to retrieve. This ID is returned in the search results from search_azure_updates."
+            }
+        },
+        "required": [
+            "id"
+        ]
+    },
+    "outputSchema": {
+        "type": "object",
+        "properties": {
+            "id": {
+                "type": "string",
+                "description": "Unique identifier"
+            },
+            "title": {
+                "type": "string",
+                "description": "Update title"
+            },
+            "description": {
+                "type": "string",
+                "description": "Full description of the update in Markdown format"
+            },
+            "status": {
+                "type": "string",
+                "nullable": true,
+                "description": "Update status (e.g., 'Active', 'Retired')"
+            },
+            "locale": {
+                "type": "string",
+                "nullable": true,
+                "description": "Locale (e.g., 'en-US')"
+            },
+            "created": {
+                "type": "string",
+                "description": "ISO 8601 timestamp when the update was created"
+            },
+            "modified": {
+                "type": "string",
+                "description": "ISO 8601 timestamp when the update was last modified"
+            },
+            "tags": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Update tags (e.g., ['Retirements', 'Security'])"
+            },
+            "productCategories": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Product categories (e.g., ['Compute', 'AI + Machine Learning'])"
+            },
+            "products": {
+                "type": "array",
+                "items": {
+                    "type": "string"
+                },
+                "description": "Specific products (e.g., ['Azure Virtual Machines'])"
+            },
+            "availabilities": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "ring": {
+                            "type": "string",
+                            "description": "Availability ring (e.g., 'General Availability', 'Preview', 'Retirement')"
+                        },
+                        "date": {
+                            "type": "string",
+                            "description": "ISO 8601 date"
+                        }
+                    },
+                    "required": [
+                        "ring",
+                        "date"
+                    ]
+                },
+                "description": "Availability information"
+            },
+            "_metadata": {
+                "type": "object",
+                "properties": {
+                    "queryTime": {
+                        "type": "number",
+                        "description": "Query execution time in milliseconds"
+                    }
+                }
+            }
+        },
+        "required": [
+            "id",
+            "title",
+            "description",
+            "created",
+            "modified",
+            "tags",
+            "productCategories",
+            "products",
+            "availabilities"
+        ]
+    },
+    "examples": [
+        {
+            "input": {
+                "id": "AZ-123e4567-e89b-12d3-a456-426614174000"
+            },
+            "output": {
+                "id": "AZ-123e4567-e89b-12d3-a456-426614174000",
+                "title": "Retirement: Azure Virtual Machines Basic tier",
+                "description": "The Basic tier for Azure Virtual Machines will be retired on March 31, 2026. Customers should migrate to Standard tier before this date.",
+                "status": "Active",
+                "locale": "en-US",
+                "created": "2025-01-15T10:00:00.000Z",
+                "modified": "2025-01-20T14:30:00.000Z",
+                "tags": [
+                    "Retirements"
+                ],
+                "productCategories": [
+                    "Compute"
+                ],
+                "products": [
+                    "Azure Virtual Machines"
+                ],
+                "availabilities": [
+                    {
+                        "ring": "Retirement",
+                        "date": "2026-03-31"
+                    }
+                ],
+                "_metadata": {
+                    "queryTime": 12
+                }
+            }
+        }
+    ],
+    "errors": [
+        {
+            "error": "Validation failed",
+            "details": "ID must be a non-empty string"
+        },
+        {
+            "error": "Not Found",
+            "details": "No update found with ID: AZ-invalid123"
+        },
+        {
+            "error": "Operation failed",
+            "details": "An unexpected error occurred."
+        }
+    ]
+}

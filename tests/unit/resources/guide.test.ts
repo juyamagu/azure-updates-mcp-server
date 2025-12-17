@@ -95,6 +95,71 @@ describe('Guide Resource', () => {
 
             expect(guide.overview).toContain('1');
         });
+
+        it('should mention two-tool architecture in overview', () => {
+            const guide = generateGuideResource(db);
+
+            expect(guide.overview).toContain('two-tool architecture');
+            expect(guide.overview).toContain('search_azure_updates');
+            expect(guide.overview).toContain('get_azure_update');
+        });
+
+        it('should include tips about two-step workflow', () => {
+            const guide = generateGuideResource(db);
+
+            const workflowTip = guide.queryTips.find(tip => tip.includes('Two-step workflow'));
+            expect(workflowTip).toBeDefined();
+            expect(workflowTip).toContain('search_azure_updates');
+            expect(workflowTip).toContain('get_azure_update');
+        });
+
+        it('should include tips about sortBy parameter', () => {
+            const guide = generateGuideResource(db);
+
+            const sortByTip = guide.queryTips.find(tip => tip.includes('sortBy'));
+            expect(sortByTip).toBeDefined();
+            expect(sortByTip).toContain('modified:desc');
+            expect(sortByTip).toContain('retirementDate');
+        });
+
+        it('should include tips about retirement date filters', () => {
+            const guide = generateGuideResource(db);
+
+            const retirementTip = guide.queryTips.find(tip => tip.includes('retirementDateFrom'));
+            expect(retirementTip).toBeDefined();
+        });
+
+        it('should explain structured filters with AND semantics', () => {
+            const guide = generateGuideResource(db);
+
+            const filterTip = guide.queryTips.find(tip =>
+                tip.includes('filters.tags') || tip.includes('filters.products') || tip.includes('filters.productCategories')
+            );
+            expect(filterTip).toBeDefined();
+            expect(filterTip).toContain('AND semantics');
+        });
+
+        it('should include examples demonstrating sortBy and retirement filters', () => {
+            const guide = generateGuideResource(db);
+
+            const retirementExample = guide.usageExamples.find(ex =>
+                ex.description.includes('retirement')
+            );
+            expect(retirementExample).toBeDefined();
+            expect(retirementExample?.query).toHaveProperty('sortBy');
+            expect(retirementExample?.query).toHaveProperty('filters');
+        });
+
+        it('should not include id parameter examples', () => {
+            const guide = generateGuideResource(db);
+
+            // No examples should use the old 'id' parameter directly
+            const idExample = guide.usageExamples.find(ex => {
+                const query = ex.query as Record<string, unknown>;
+                return 'id' in query && typeof query.id === 'string';
+            });
+            expect(idExample).toBeUndefined();
+        });
     });
 
     describe('getGuideResourceResponse', () => {

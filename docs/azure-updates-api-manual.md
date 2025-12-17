@@ -420,10 +420,14 @@ Use the `modified` field to implement incremental synchronization and avoid fetc
 
 **Subsequent Updates:**
 ```
-1. Query: $filter=modified gt {last_sync_time}
+1. Query: $filter=modified ge {last_sync_time}
 2. UPSERT records using `id` as key
 3. Update last_sync_time to the maximum `modified` from results
 ```
+
+**Important:** Use `ge` (>=) instead of `gt` (>) to handle multiple updates with the same timestamp. 
+The API may publish multiple updates at exactly the same time, and using `gt` would miss records 
+that share the timestamp with the last synced record.
 
 #### Example Workflow
 
@@ -437,8 +441,8 @@ curl 'https://www.microsoft.com/releasecommunications/api/v2/azure?$count=true&t
 
 **Step 2: Incremental Update (Next Run)**
 ```bash
-# Only fetch items modified since last sync
-curl 'https://www.microsoft.com/releasecommunications/api/v2/azure?$count=true&top=100&$filter=tags/any(f:f%20eq%20%27Retirements%27)%20and%20modified%20gt%202025-12-12T11:30:27.0841562Z&orderby=modified%20desc'
+# Only fetch items modified since last sync (use 'ge' to include same timestamp)
+curl 'https://www.microsoft.com/releasecommunications/api/v2/azure?$count=true&top=100&$filter=tags/any(f:f%20eq%20%27Retirements%27)%20and%20modified%20ge%202025-12-12T11:30:27.0841562Z&orderby=modified%20desc'
 
 # UPSERT results (handles both new items and updates to existing items)
 ```

@@ -1,6 +1,6 @@
 {
     "name": "azure-updates-mcp-server",
-    "version": "0.1.0",
+    "version": "1.2.0",
     "description": "MCP server providing natural language search for Azure Updates without OData syntax",
     "type": "module",
     "main": "dist/index.js",

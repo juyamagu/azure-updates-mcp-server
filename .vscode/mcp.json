@@ -1,6 +1,6 @@
 {
     "servers": {
-        "azure-updates-mcp-server": {
+        "azure-updates-mcp": {
             "command": "node",
             "args": [
                 "dist/index.js",

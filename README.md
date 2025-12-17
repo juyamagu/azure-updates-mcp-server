@@ -30,12 +30,12 @@ npm install -g ./azure-updates-mcp-server-{version}.tgz
 
 **Step 3: Run the MCP server**
 
-Now, you can run the MCP server via `azure-updates-mcp-server` command. If you're using VS Code, the following configuration will launch the server:
+Now, you can run the MCP server via `azure-updates-mcp-server` command. If you're using VS Code, the following configuration (`.vscode/mcp.json`) will launch the server:
 
 ```jsonc
 {
-  "cline.mcpServers": {
-    "azure-updates": {
+  "servers": {
+    "azure-updates-mcp": {
       "command": "azure-updates-mcp-server",
       // Those environment variables are optional; configure as needed
       // "env": {
@@ -47,14 +47,17 @@ Now, you can run the MCP server via `azure-updates-mcp-server` command. If you'r
   }
 }
 ```
+
+> **⚠️ Note**: On the first run, data synchronization to the local cache will occur, which may take a few minutes before search queries can be served. Once synchronization is complete, subsequent queries will respond quickly.
+
 ### Alternative: Using npx
 
 Or, simply run with `npx` without global installation:
 
 ```jsonc
 {
-  "cline.mcpServers": {
-    "azure-updates": {
+  "servers": {
+    "azure-updates-mcp": {
       "command": "npx",
       "args": ["~/azure-updates-mcp-server-{version}.tgz"],
     }
@@ -108,15 +111,19 @@ See [.env.example](./.env.example) for all configuration options.
 
 ## Available Tools
 
-### `search_azure_updates`
+### Two-Tool Architecture
 
-Search, filter, and retrieve Azure updates using natural language queries or structured filters.
+This server provides a two-tool pattern for efficient discovery and detail retrieval:
 
-**Key Parameters:**
-- `query`: Natural language or keyword search
-- `id`: Fetch specific update by ID
-- `filters`: Tags, categories, products, dates, status, availability ring
-- `limit`: Max results (1-100, default: 50)
+#### 1. `search_azure_updates` - Lightweight Discovery
+
+Search and filter Azure updates to find relevant items. Returns **metadata only** (no descriptions) for 80% token reduction.
+
+**Key Features:**
+- **Phrase search**: Use quotes for exact phrases (`"Azure Virtual Machines"`)
+- **FTS5 search**: Searches title + description with BM25 relevance ranking
+- **Structured filters**: Tags, products, categories (AND semantics), dates, status
+- **Sorting**: By modified/created date, retirement date, or relevance
 
 **Example:**
 ```json
@@ -124,11 +131,27 @@ Search, filter, and retrieve Azure updates using natural language queries or str
   "query": "OAuth authentication security",
   "filters": {
     "tags": ["Security"],
+    "productCategories": ["Compute"],
     "dateFrom": "2025-01-01"
   },
   "limit": 10
 }
 ```
+
+#### 2. `get_azure_update` - Full Details
+
+Retrieve complete update details including full Markdown description and URL.
+
+**Example:**
+```json
+{
+  "id": "536699"
+}
+```
+
+**Recommended Workflow:**
+1. Use `search_azure_updates` to find relevant updates
+2. Use `get_azure_update` to fetch full details for selected items
 
 For more examples, see the `azure-updates://guide` resource (distributed through MCP protocol).
 
@@ -185,6 +208,7 @@ See [Troubleshooting Guide](./docs/troubleshooting.md) for common issues and sol
 
 - [Development Guide](./docs/development.md) - Contributing and testing
 - [Troubleshooting](./docs/troubleshooting.md) - Common issues
+- [MCP Best Practices](./docs/mcp-best-practices.md) - Tool design guidelines
 - [Azure Updates API Manual](./docs/azure-updates-api-manual.md) - API reference
 
 ## License

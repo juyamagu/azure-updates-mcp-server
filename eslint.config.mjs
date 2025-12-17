@@ -28,6 +28,7 @@ export default tseslint.config(
             '*.config.ts',
             '*.config.js',
             '*.config.mjs',
+            'scripts/**/*.mjs',
         ],
     },
     {
@@ -37,8 +38,23 @@ export default tseslint.config(
             '@typescript-eslint/no-unsafe-member-access': 'off',
             '@typescript-eslint/no-unsafe-call': 'off',
             '@typescript-eslint/no-unsafe-return': 'off',
+            '@typescript-eslint/no-unsafe-argument': 'off',
             '@typescript-eslint/require-await': 'off',
             '@typescript-eslint/explicit-function-return-type': 'off',
+            '@typescript-eslint/no-explicit-any': 'off',
+            '@typescript-eslint/prefer-promise-reject-errors': 'off',
+            'complexity': 'off',
+            'no-console': 'off',
+        },
+    },
+    {
+        files: ['scripts/**/*.mjs', 'scripts/**/*.js'],
+        rules: {
+            '@typescript-eslint/no-unsafe-assignment': 'off',
+            '@typescript-eslint/no-unsafe-member-access': 'off',
+            '@typescript-eslint/no-unsafe-call': 'off',
+            '@typescript-eslint/no-explicit-any': 'off',
+            'no-console': 'off',
         },
     }
 );

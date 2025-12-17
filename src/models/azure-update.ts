@@ -18,8 +18,8 @@ export interface AzureUpdateAvailability {
 export interface AzureUpdate {
     id: string; // Unique identifier (GUID)
     title: string; // Update title
-    description: string; // HTML content from API
-    descriptionMarkdown?: string; // Converted markdown (populated locally)
+    description: string; // Markdown content (converted from HTML)
+    url: string; // Direct URL to the update page
     status: string | null; // Update status (e.g., 'Active', 'Retired')
     locale: string | null; // Language/region code
     created: string; // ISO 8601 timestamp
@@ -51,7 +51,14 @@ export interface AzureUpdateRecord {
 }
 
 /**
- * Search result with relevance score
+ * Lightweight search result (excludes description field to reduce token usage)
+ * Used by search_azure_updates for efficient discovery
+ */
+export type AzureUpdateSearchSummary = Omit<AzureUpdate, 'description'>;
+
+/**
+ * Full search result with relevance score (includes description)
+ * Used internally by search service before filtering
  */
 export interface AzureUpdateSearchResult extends AzureUpdate {
     relevanceScore?: number; // BM25 relevance score from FTS5

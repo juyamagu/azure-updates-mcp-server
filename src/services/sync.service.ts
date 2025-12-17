@@ -58,6 +58,58 @@ export interface SyncResult {
 }
 
 /**
+ * Create a sync failure result
+ */
+function createSyncFailureResult(startTime: number, error: string): SyncResult {
+    return {
+        success: false,
+        recordsProcessed: 0,
+        recordsInserted: 0,
+        recordsUpdated: 0,
+        durationMs: Date.now() - startTime,
+        error,
+    };
+}
+
+/**
+ * Apply retention date filter to updates if configured
+ */
+function applyRetentionFilter(
+    allUpdates: AzureUpdate[],
+    retentionStartDate: string | undefined
+): AzureUpdate[] {
+    if (!retentionStartDate) {
+        return allUpdates;
+    }
+
+    const updates = filterUpdatesByRetentionDate(allUpdates, retentionStartDate);
+
+    if (allUpdates.length !== updates.length) {
+        logger.info('Filtered out old updates', {
+            totalFetched: allUpdates.length,
+            afterFilter: updates.length,
+            filtered: allUpdates.length - updates.length,
+            retentionStartDate,
+        });
+    }
+
+    return updates;
+}
+
+/**
+ * Calculate insert and update counts
+ */
+function calculateSyncCounts(
+    recordCountBefore: number,
+    recordCountAfter: number,
+    recordsProcessed: number
+): { recordsInserted: number; recordsUpdated: number } {
+    const recordsInserted = Math.max(0, recordCountAfter - recordCountBefore);
+    const recordsUpdated = recordsProcessed - recordsInserted;
+    return { recordsInserted, recordsUpdated };
+}
+
+/**
  * Perform full or differential sync with Azure Updates API
  * 
  * @param db Database instance
@@ -67,67 +119,42 @@ export interface SyncResult {
 export async function performSync(db: Database.Database, retentionStartDate?: string): Promise<SyncResult> {
     const startTime = Date.now();
 
-    // T058: Log sync start
     logger.info('Starting sync operation');
 
-    // Acquire sync lock (pessimistic concurrency control)
+    // Acquire sync lock
     const lockAcquired = startSync(db);
     if (!lockAcquired) {
         logger.warn('Sync already in progress, skipping');
-        return {
-            success: false,
-            recordsProcessed: 0,
-            recordsInserted: 0,
-            recordsUpdated: 0,
-            durationMs: Date.now() - startTime,
-            error: 'Sync already in progress',
-        };
+        return createSyncFailureResult(startTime, 'Sync already in progress');
     }
 
     try {
-        // Get current checkpoint
+        // Get checkpoint and metadata
         const checkpoint = getSyncCheckpoint(db);
         const lastSync = checkpoint?.lastSync || INITIAL_SYNC_CHECKPOINT;
         const recordCountBefore = getUpdateCount(db);
-
         const isInitialSync = lastSync === INITIAL_SYNC_CHECKPOINT;
 
-        // T058: Log sync type
         logger.info('Sync checkpoint retrieved', {
             lastSync,
             isInitialSync,
             recordCountBefore,
         });
 
-        const retentionModifiedSince = retentionStartDate
-            ? `${retentionStartDate}T00:00:00.000Z`
-            : undefined;
-
-        // T047/T048: Fetch updates (full or differential)
-        // For initial sync, push retention filtering down to the API via modifiedSince.
+        // Fetch updates from API
+        const retentionModifiedSince = retentionStartDate ? `${retentionStartDate}T00:00:00.000Z` : undefined;
         const allUpdates = await fetchAzureUpdates({
             modifiedSince: isInitialSync ? retentionModifiedSince : lastSync,
             includeCount: isInitialSync,
         });
 
-        // Filter out records older than retention start date if configured
-        const updates = retentionStartDate ? filterUpdatesByRetentionDate(allUpdates, retentionStartDate) : allUpdates;
+        // Apply retention filter
+        const updates = applyRetentionFilter(allUpdates, retentionStartDate);
 
-        if (retentionStartDate && allUpdates.length !== updates.length) {
-            logger.info('Filtered out old updates', {
-                totalFetched: allUpdates.length,
-                afterFilter: updates.length,
-                filtered: allUpdates.length - updates.length,
-                retentionStartDate,
-            });
-        }
-
+        // Handle no updates case
         if (updates.length === 0) {
             const durationMs = Date.now() - startTime;
-
-            // T054: Update checkpoint (no changes)
             completeSyncSuccess(db, new Date().toISOString(), recordCountBefore, durationMs);
-
             logger.info('Sync completed - no new updates', { durationMs });
 
             return {
@@ -139,24 +166,23 @@ export async function performSync(db: Database.Database, retentionStartDate?: st
             };
         }
 
-        // T051: Process updates in transaction
+        // Process updates
         const result = syncUpdatesInTransaction(db, updates);
-
         const recordCountAfter = getUpdateCount(db);
-        const recordsInserted = Math.max(0, recordCountAfter - recordCountBefore);
-        const recordsUpdated = result.recordsProcessed - recordsInserted;
+        const { recordsInserted, recordsUpdated } = calculateSyncCounts(
+            recordCountBefore,
+            recordCountAfter,
+            result.recordsProcessed
+        );
 
-        // Find latest modified timestamp for checkpoint
+        // Update checkpoint
         const latestModified = updates.reduce((latest, update) => {
             return update.modified > latest ? update.modified : latest;
         }, lastSync);
 
         const durationMs = Date.now() - startTime;
-
-        // T054: Update checkpoint on success
         completeSyncSuccess(db, latestModified, recordCountAfter, durationMs);
 
-        // T058: Log sync completion
         logger.info('Sync completed successfully', {
             recordsProcessed: result.recordsProcessed,
             recordsInserted,
@@ -177,20 +203,10 @@ export async function performSync(db: Database.Database, retentionStartDate?: st
         const err = error as Error;
         const durationMs = Date.now() - startTime;
 
-        // T055: Mark sync as failed and rollback checkpoint
         completeSyncFailure(db, err.message);
-
-        // T058: Log sync error
         logger.errorWithStack('Sync failed', err, { durationMs });
 
-        return {
-            success: false,
-            recordsProcessed: 0,
-            recordsInserted: 0,
-            recordsUpdated: 0,
-            durationMs,
-            error: err.message,
-        };
+        return createSyncFailureResult(startTime, err.message);
     }
 }
 
